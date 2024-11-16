@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: webook-mysql-claim
+spec:
+   storageClassName: manual
+   accessModes:
+#     只能被一个 POD　用
+     - ReadWriteOnce
+   resources:
+     requests:
+       storage: 1Gi

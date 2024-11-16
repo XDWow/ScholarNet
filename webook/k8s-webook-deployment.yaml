@@ -1,0 +1,24 @@
+#确定如何去解读这个配置，指定用apps/v1来解读
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webook
+spec:
+  #   副本数量
+  replicas: 3
+  selector:
+    matchLabels:
+      app: webook
+  #   template 描述你的 POD 是什么样的
+  template:
+    metadata:
+      labels:
+        app: webook
+    #   POD 的具体信息
+    spec:
+      containers:
+        - name: webook
+          image: jj/webook:v0.0.1
+          command: ["/bin/bash", "-ce", "tail -f /dev/null"]
+          ports:
+            - containerPort: 8080
