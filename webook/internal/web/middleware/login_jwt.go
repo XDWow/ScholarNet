@@ -4,19 +4,40 @@ import (
 	"gitee.com/geekbang/basic-go/webook/internal/web"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"log"
 	"net/http"
 	"strings"
 	"time"
 )
 
-type LoginJwtMiddlewareBuilder struct{}
+// LoginJWTMiddlewareBuilder JWT 登录校验
+type LoginJWTMiddlewareBuilder struct {
+	paths []string
+}
 
-func (m *LoginJwtMiddlewareBuilder) CheckLogin() gin.HandlerFunc {
+func NewLoginJWTMiddlewareBuilder() *LoginJWTMiddlewareBuilder {
+	return &LoginJWTMiddlewareBuilder{}
+}
+
+func (l *LoginJWTMiddlewareBuilder) IgnorePaths(path string) *LoginJWTMiddlewareBuilder {
+	l.paths = append(l.paths, path)
+	return l
+}
+
+func (l *LoginJWTMiddlewareBuilder) Build() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		path := ctx.Request.URL.Path
-		if path == "/users/login" || path == "/users/signup" {
-			return
+
+		//不需要登录校验的
+		//path := ctx.Request.URL.Path
+		//if path == "/users/login" || path == "/users/signup" {
+		//	return
+		//}
+		for _, path := range l.paths {
+			if ctx.Request.URL.Path == path {
+				return
+			}
 		}
+
 		authCode := ctx.GetHeader("Authorization")
 		// 没有token，没登录！
 		if authCode == "" {
@@ -50,11 +71,17 @@ func (m *LoginJwtMiddlewareBuilder) CheckLogin() gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
-		expireTime := uc.ExpiresAt
-		//剩余过期时间<50s就刷新
-		if expireTime.Sub(time.Now()) < time.Second*5 {
-			uc.ExpiresAt = jwt.NewNumericDate(time.Now().Add(time.Minute * 5))
 
+		now := time.Now()
+		// 每十秒钟刷新一次
+		if uc.ExpiresAt.Sub(now) < time.Second*50 {
+			uc.ExpiresAt = jwt.NewNumericDate(time.Now().Add(time.Minute))
+			tokenStr, err = token.SignedString([]byte("95osj3fUD7fo0mlYdDbncXz4VD2igvf0"))
+			if err != nil {
+				// 记录日志
+				log.Println("jwt 续约失败", err)
+			}
+			ctx.Header("x-jwt-token", tokenStr)
 		}
 		ctx.Set("uc", uc)
 	}

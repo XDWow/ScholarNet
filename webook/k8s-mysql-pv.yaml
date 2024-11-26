@@ -10,5 +10,6 @@ spec:
     storage: 1Gi
   accessModes:
     - ReadWriteOnce
+#  hostPath 定义的是 Kubernetes 节点（即容器所在 Linux 主机）上的路径,告诉 Kubernetes 使用运行容器的节点上（Linux 系统）的 /mnt/data 目录作为持久化存储。
   hostPath:
     path: "/mnt/data"
