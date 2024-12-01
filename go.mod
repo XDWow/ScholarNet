@@ -1,6 +1,8 @@
 module gitee.com/geekbang/basic-go
 
-go 1.20
+go 1.22
+
+toolchain go1.23.3
 
 require (
 	github.com/alibabacloud-go/darabonba-openapi v0.2.1
@@ -17,9 +19,10 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/wire v0.6.0
 	github.com/redis/go-redis/v9 v9.7.0
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.1040
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.0.1040
+	go.uber.org/mock v0.5.0
 	golang.org/x/crypto v0.18.0
 	gorm.io/driver/mysql v1.5.1
 	gorm.io/driver/sqlite v1.5.3

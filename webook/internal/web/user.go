@@ -150,6 +150,8 @@ func (h *UserHandler) SignUp(ctx *gin.Context) {
 	}
 
 	var req SignUpReq
+	// Bind 方法会根据 Content-Type 来解析你的数据到 req 里面
+	// 解析错了，就会直接写回一个 400 错误
 	if err := ctx.Bind(&req); err != nil {
 		return
 	}
