@@ -2,6 +2,7 @@ package web
 
 import (
 	"bytes"
+	"errors"
 	"gitee.com/geekbang/basic-go/webook/internal/domain"
 	"gitee.com/geekbang/basic-go/webook/internal/service"
 	svcmocks "gitee.com/geekbang/basic-go/webook/internal/service/mocks"
@@ -57,13 +58,61 @@ func TestUserHandler_SignUp(t *testing.T) {
 			wantCode: http.StatusBadRequest,
 		},
 		{
-			name: "注册成功",
+			name: "邮箱格式不对",
+			mock: func(ctrl *gomock.Controller) service.UserService {
+				usersvc := svcmocks.NewMockUserService(ctrl)
+				return usersvc
+			},
+			reqBody: `
+{
+	"email": "123@qq",
+	"password": "hello#world123",
+	"confirmPassword": "hello#world123"
+}
+`,
+			wantCode: http.StatusOK,
+			wantBody: "非法邮箱格式",
+		},
+		{
+			name: "两次输入密码不对",
+			mock: func(ctrl *gomock.Controller) service.UserService {
+				usersvc := svcmocks.NewMockUserService(ctrl)
+				return usersvc
+			},
+			reqBody: `
+{
+	"email": "123@qq.com",
+	"password": "123",
+	"confirmPassword": "hello#world123"
+}
+`,
+			wantCode: http.StatusOK,
+			wantBody: "两次输入密码不对",
+		},
+		{
+			name: "密码格式不对",
+			mock: func(ctrl *gomock.Controller) service.UserService {
+				usersvc := svcmocks.NewMockUserService(ctrl)
+				return usersvc
+			},
+			reqBody: `
+{
+	"email": "123@qq.com",
+	"password": "helloworld123",
+	"confirmPassword": "helloworld123"
+}
+`,
+			wantCode: http.StatusOK,
+			wantBody: "密码必须包含字母、数字、特殊字符，并且不少于八位",
+		},
+		{
+			name: "邮箱冲突",
 			mock: func(ctrl *gomock.Controller) service.UserService {
 				usersvc := svcmocks.NewMockUserService(ctrl)
 				usersvc.EXPECT().SignUp(gomock.Any(), domain.User{
 					Email:    "123@qq.com",
 					Password: "hello#world123",
-				}).Return(nil)
+				}).Return(service.ErrDuplicateEmail)
 				return usersvc
 			},
 			reqBody: `
@@ -74,7 +123,27 @@ func TestUserHandler_SignUp(t *testing.T) {
 }
 `,
 			wantCode: http.StatusOK,
-			wantBody: "注册成功",
+			wantBody: "该邮箱已有账号",
+		},
+		{
+			name: "注册成功",
+			mock: func(ctrl *gomock.Controller) service.UserService {
+				usersvc := svcmocks.NewMockUserService(ctrl)
+				usersvc.EXPECT().SignUp(gomock.Any(), domain.User{
+					Email:    "123@qq.com",
+					Password: "hello#world123",
+				}).Return(errors.New("随便一个错误"))
+				return usersvc
+			},
+			reqBody: `
+{
+	"email": "123@qq.com",
+	"password": "hello#world123",
+	"confirmPassword": "hello#world123"
+}
+`,
+			wantCode: http.StatusOK,
+			wantBody: "系统错误",
 		},
 	}
 
@@ -90,7 +159,7 @@ func TestUserHandler_SignUp(t *testing.T) {
 			// server 负责监听请求，但也可以通过 server 发请求：需要 req 携带请求信息，resp 携带响应信息
 			req, err := http.NewRequest(http.MethodPost, "/users/signup", bytes.NewBuffer([]byte(testCase.reqBody)))
 			require.NoError(t, err)
-			//数据是 JSON 形式
+			//这一步不要忘记了，说明数据是 JSON 形式
 			req.Header.Set("Content-Type", "application/json")
 
 			resp := httptest.NewRecorder()
