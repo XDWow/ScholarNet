@@ -10,11 +10,12 @@ import (
 	"time"
 )
 
-func InitGin(middlewares []gin.HandlerFunc, u *web.UserHandler) *gin.Engine {
+func InitWebServer(middlewares []gin.HandlerFunc, u *web.UserHandler, w *web.OAuth2WechatHandler) *gin.Engine {
 	server := gin.Default()
 	//middlewares...将切片解包为多个独立的参数
 	server.Use(middlewares...)
 	u.RegisterRoutes(server)
+	w.RegisterRoutes(server)
 	return server
 }
 

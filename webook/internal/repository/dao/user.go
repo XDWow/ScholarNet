@@ -19,6 +19,7 @@ type UserDAO interface {
 	FindByEmail(ctx context.Context, email string) (User, error)
 	FindByPhone(ctx context.Context, phone string) (User, error)
 	FindById(ctx context.Context, id int64) (User, error)
+	FindByWechat(ctx context.Context, openID string) (User, error)
 }
 
 type GORMUserDAO struct {
@@ -54,7 +55,13 @@ func (dao *GORMUserDAO) FindByEmail(ctx context.Context, email string) (User, er
 
 func (dao *GORMUserDAO) FindByPhone(ctx context.Context, phone string) (User, error) {
 	var u User
-	err := dao.db.WithContext(ctx).Where("Phone=?", phone).First(&u).Error
+	err := dao.db.WithContext(ctx).Where("phone=?", phone).First(&u).Error
+	return u, err
+}
+
+func (dao *GORMUserDAO) FindByWechat(ctx context.Context, openID string) (User, error) {
+	var u User
+	err := dao.db.WithContext(ctx).Where("wechat_openID=?", openID).First(&u).Error
 	return u, err
 }
 
@@ -76,6 +83,10 @@ type User struct {
 	//但不能是多个""，会误解为一个值： 空，那就多个值相同了
 	//点进NullString是一个结构体，可以区分为值： 空还是不存在的空，邮箱登录的用户手机号是不存在的空
 	Phone sql.NullString `gorm:"unique"`
+
+	Wechat_openID  sql.NullString `gorm:"unique"`
+	Wechat_unionID sql.NullString `gorm:"unique"`
+
 	// 时区，UTC 0 的毫秒数
 	// 创建时间
 	Ctime int64

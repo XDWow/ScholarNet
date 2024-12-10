@@ -5,6 +5,7 @@ go 1.22
 toolchain go1.23.3
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/alibabacloud-go/darabonba-openapi v0.2.1
 	github.com/alibabacloud-go/dysmsapi-20170525/v2 v2.0.18
 	github.com/aliyun/alibaba-cloud-sdk-go v1.63.53
@@ -18,6 +19,7 @@ require (
 	github.com/goccy/go-json v0.10.2
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/wire v0.6.0
+	github.com/lithammer/shortuuid/v4 v4.2.0
 	github.com/redis/go-redis/v9 v9.7.0
 	github.com/stretchr/testify v1.9.0
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.1040
@@ -50,6 +52,7 @@ require (
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.19.0 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/context v1.1.2 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/gorilla/sessions v1.2.2 // indirect

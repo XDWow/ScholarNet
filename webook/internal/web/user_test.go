@@ -126,7 +126,7 @@ func TestUserHandler_SignUp(t *testing.T) {
 			wantBody: "该邮箱已有账号",
 		},
 		{
-			name: "注册成功",
+			name: "系统错误",
 			mock: func(ctrl *gomock.Controller) service.UserService {
 				usersvc := svcmocks.NewMockUserService(ctrl)
 				usersvc.EXPECT().SignUp(gomock.Any(), domain.User{

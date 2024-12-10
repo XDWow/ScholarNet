@@ -4,7 +4,7 @@
 //go:build !wireinject
 // +build !wireinject
 
-package main
+package integration
 
 import (
 	"gitee.com/geekbang/basic-go/webook/internal/repository"
@@ -31,8 +31,6 @@ func InitWebServer() *gin.Engine {
 	smsService := ioc.InitSMSService()
 	codeService := service.NewCodeService(codeRepository, smsService)
 	userHandler := web.NewUserHandler(userService, codeService)
-	wechatService := ioc.InitWechatService()
-	oAuth2WechatHandler := web.NewOAuth2WechatHandler(wechatService, userService)
-	engine := ioc.InitWebServer(v, userHandler, oAuth2WechatHandler)
+	engine := ioc.InitGin(v, userHandler)
 	return engine
 }

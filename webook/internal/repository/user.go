@@ -19,6 +19,7 @@ type UserRepository interface {
 	FindByEmail(ctx context.Context, email string) (domain.User, error)
 	FindByPhone(ctx context.Context, phone string) (domain.User, error)
 	FindById(ctx context.Context, id int64) (domain.User, error)
+	FindByWechat(ctx context.Context, openID string) (domain.User, error)
 }
 
 type CacheUserRepository struct {
@@ -53,6 +54,15 @@ func (repo *CacheUserRepository) FindByPhone(ctx context.Context, phone string) 
 	return repo.entityToDomain(u), nil
 }
 
+func (repo *CacheUserRepository) FindByWechat(ctx context.Context, openID string) (domain.User, error) {
+	u, err := repo.dao.FindByWechat(ctx, openID)
+	if err != nil {
+		return domain.User{}, err
+	}
+	return repo.entityToDomain(u), nil
+}
+
+// 查询频率较高，引入缓存机制
 func (repo *CacheUserRepository) FindById(ctx context.Context, id int64) (domain.User, error) {
 	u, err := repo.cache.Get(ctx, id)
 	//三类：
@@ -99,10 +109,12 @@ func (repo *CacheUserRepository) domainToEntity(u domain.User) dao.User {
 
 func (repo *CacheUserRepository) entityToDomain(u dao.User) domain.User {
 	return domain.User{
-		Id:       u.Id,
-		Email:    u.Email.String,
-		Password: u.Password,
-		Phone:    u.Phone.String,
-		Ctime:    time.UnixMilli(u.Ctime),
+		Id:             u.Id,
+		Email:          u.Email.String,
+		Password:       u.Password,
+		Phone:          u.Phone.String,
+		Wechat_openID:  u.Wechat_openID.String,
+		Wechat_unionID: u.Wechat_unionID.String,
+		Ctime:          time.UnixMilli(u.Ctime),
 	}
 }

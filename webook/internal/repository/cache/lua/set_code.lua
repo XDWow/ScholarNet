@@ -1,4 +1,4 @@
---你的验证码在 Redis 上的 key，Redis执行lua脚本
+--你的验证码在 Redis 上的 key
 -- phone_code:login:152xxxxxxxx
 local key = KEYS[1]
 -- 验证次数，我们一个验证码，最多重复三次，这个记录还可以验证几次

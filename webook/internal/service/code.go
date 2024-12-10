@@ -17,7 +17,7 @@ var (
 const codeTplId = "1877556"
 
 type CodeService interface {
-	Send(ctx context.Context, phone string, biz string) error
+	Send(ctx context.Context, biz string, phone string) error
 	Verify(ctx context.Context, biz string, phone string, inputCode string) (bool, error)
 }
 
@@ -34,9 +34,10 @@ func NewCodeService(repo repository.CodeRepository, smsSvc sms.Service) CodeServ
 }
 
 // Send 发验证码，需要什么参数
-func (svc *codeService) Send(ctx context.Context, phone string,
+func (svc *codeService) Send(ctx context.Context,
 	// 区别业务场景
-	biz string) error {
+	biz string,
+	phone string) error {
 	//生成一个验证码
 	code := svc.generateCode()
 	// 塞进 Redis,单线程的，解决了并发问题

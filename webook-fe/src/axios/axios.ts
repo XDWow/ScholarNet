@@ -1,5 +1,4 @@
 import axios from "axios";
-import router from "next/router";
 const instance = axios.create({
     // 这边记得修改你对应的配置文件
     baseURL:  "http://localhost:8080",
@@ -9,14 +8,11 @@ const instance = axios.create({
 
 instance.interceptors.response.use(function (resp) {
     const newToken = resp.headers["x-jwt-token"]
-    //const newRefreshToken = resp.headers["x-refresh-token"]
     console.log("resp headers", resp.headers)
+    console.log("token" + newToken)
     if (newToken) {
         localStorage.setItem("token", newToken)
     }
-    // if (newRefreshToken) {
-    //     localStorage.setItem("refresh_token", newRefreshToken)
-    // }
     if (resp.status == 401) {
         window.location.href="/users/login"
     }
