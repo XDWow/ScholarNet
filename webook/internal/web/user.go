@@ -16,8 +16,9 @@ type UserHandler struct {
 	//regexp.Regexp 是 regexp 包定义的一个结构体类型，用于表示已编译的正则表达式。
 	emailExp    *regexp.Regexp
 	passwordExp *regexp.Regexp
-	svc         service.UserService
-	codeSvc     service.CodeService
+
+	svc     service.UserService
+	codeSvc service.CodeService
 	jwtHandler
 }
 
