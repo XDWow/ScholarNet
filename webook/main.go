@@ -19,7 +19,6 @@ func main() {
 	//u.RegisterRoutes(server)
 
 	initViperV1()
-	initViperV1()
 	server := InitWebServer()
 	server.GET("/hello", func(c *gin.Context) {
 		c.String(http.StatusOK, "你好！")
