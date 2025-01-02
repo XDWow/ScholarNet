@@ -17,7 +17,8 @@ func main() {
 	//
 	//u := initUser(db, rdb)
 	//u.RegisterRoutes(server)
-	
+
+	initViperV1()
 	initViperV1()
 	server := InitWebServer()
 	server.GET("/hello", func(c *gin.Context) {
