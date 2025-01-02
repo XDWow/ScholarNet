@@ -1,22 +1,34 @@
 package web
 
 import (
-	"gitee.com/geekbang/basic-go/webook/internal/service"
-	"gitee.com/geekbang/basic-go/webook/internal/service/oauth2/wechat"
+	"errors"
+	"fmt"
+	"github.com/LXD-c/basic-go/webook/internal/service"
+	"github.com/LXD-c/basic-go/webook/internal/service/oauth2/wechat"
+	ijwt "github.com/LXD-c/basic-go/webook/internal/web/jwt"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
+	uuid "github.com/lithammer/shortuuid/v4"
 	"net/http"
 )
 
 type OAuth2WechatHandler struct {
-	svc     wechat.Service
-	userSvc service.UserService
-	jwtHandler
+	svc      wechat.Service
+	userSvc  service.UserService
+	stateKey []byte
+	WechatHandlerConfig
+	ijwt.Handler
+}
+
+type WechatHandlerConfig struct {
+	Secure bool
 }
 
 func NewOAuth2WechatHandler(svc wechat.Service, userSvc service.UserService) *OAuth2WechatHandler {
 	return &OAuth2WechatHandler{
-		svc:     svc,
-		userSvc: userSvc,
+		svc:      svc,
+		userSvc:  userSvc,
+		stateKey: []byte("95osj3fUD7foxmlYdDbncXz4VD2igvf1"),
 	}
 }
 
@@ -27,8 +39,8 @@ func (h *OAuth2WechatHandler) RegisterRoutes(server *gin.Engine) {
 }
 
 func (h *OAuth2WechatHandler) AuthURL(ctx *gin.Context) {
-
-	url, err := h.svc.AuthURL(ctx)
+	state := uuid.New()
+	url, err := h.svc.AuthURL(ctx, state)
 	if err != nil {
 		ctx.JSON(http.StatusOK, Result{
 			Code: 5,
@@ -36,6 +48,18 @@ func (h *OAuth2WechatHandler) AuthURL(ctx *gin.Context) {
 		})
 		return
 	}
+	tokenStr, err := h.SetStateJWTToken(ctx, state)
+	if err != nil {
+		ctx.JSON(http.StatusOK, Result{
+			Code: 5,
+			Msg:  "系统错误",
+		})
+		return
+	}
+	//将 token 存 Cookie 里面
+	ctx.SetCookie("jwt-state", tokenStr, 600,
+		"/oauth2/wechat/callback",
+		"", h.WechatHandlerConfig.Secure, true)
 	ctx.JSON(http.StatusOK, Result{
 		Data: url,
 	})
@@ -43,8 +67,15 @@ func (h *OAuth2WechatHandler) AuthURL(ctx *gin.Context) {
 
 func (h *OAuth2WechatHandler) Callback(ctx *gin.Context) {
 	code := ctx.Query("code")
-	state := ctx.Query("state")
-	info, err := h.svc.VerifyCode(ctx, code, state)
+	err := h.verifyState(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusOK, Result{
+			Code: 5,
+			Msg:  "登录失败",
+		})
+		return
+	}
+	info, err := h.svc.VerifyCode(ctx, code)
 	if err != nil {
 		ctx.JSON(http.StatusOK, Result{
 			Code: 5,
@@ -61,7 +92,7 @@ func (h *OAuth2WechatHandler) Callback(ctx *gin.Context) {
 		})
 		return
 	}
-	err = h.setJWTToken(ctx, u.Id)
+	err = h.SetLoginToken(ctx, u.Id)
 	if err != nil {
 		ctx.JSON(http.StatusOK, Result{
 			Code: 5,
@@ -72,4 +103,25 @@ func (h *OAuth2WechatHandler) Callback(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, Result{
 		Msg: "扫码登录成功",
 	})
+}
+
+func (h *OAuth2WechatHandler) verifyState(ctx *gin.Context) error {
+	state := ctx.Query("state")
+	ck, err := ctx.Cookie("jwt-state")
+	if err != nil {
+		return fmt.Errorf("拿不到 state 的 cookie, %w", err)
+	}
+
+	var sc ijwt.StateClaims
+	token, err := jwt.ParseWithClaims(ck, &sc, func(token *jwt.Token) (interface{}, error) {
+		return h.stateKey, nil
+	})
+	if err != nil || !token.Valid {
+		return fmt.Errorf("token 过期, %w", err)
+	}
+
+	if sc.State != state {
+		return errors.New("state 不相等")
+	}
+	return nil
 }

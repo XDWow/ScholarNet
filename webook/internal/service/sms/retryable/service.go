@@ -3,7 +3,7 @@ package retryable
 import (
 	"context"
 	"errors"
-	"gitee.com/geekbang/basic-go/webook/internal/service/sms"
+	"github.com/LXD-c/basic-go/webook/internal/service/sms"
 )
 
 // 这个要小心并发问题

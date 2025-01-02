@@ -7,12 +7,13 @@
 package main
 
 import (
-	"gitee.com/geekbang/basic-go/webook/internal/repository"
-	"gitee.com/geekbang/basic-go/webook/internal/repository/cache"
-	"gitee.com/geekbang/basic-go/webook/internal/repository/dao"
-	"gitee.com/geekbang/basic-go/webook/internal/service"
-	"gitee.com/geekbang/basic-go/webook/internal/web"
-	"gitee.com/geekbang/basic-go/webook/ioc"
+	"github.com/LXD-c/basic-go/webook/internal/repository"
+	"github.com/LXD-c/basic-go/webook/internal/repository/cache"
+	"github.com/LXD-c/basic-go/webook/internal/repository/dao"
+	"github.com/LXD-c/basic-go/webook/internal/service"
+	"github.com/LXD-c/basic-go/webook/internal/web"
+	"github.com/LXD-c/basic-go/webook/internal/web/jwt"
+	"github.com/LXD-c/basic-go/webook/ioc"
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,7 +21,8 @@ import (
 
 func InitWebServer() *gin.Engine {
 	cmdable := ioc.InitRedis()
-	v := ioc.InitMiddlewares(cmdable)
+	handler := jwt.NewRedisJwtHandler(cmdable)
+	v := ioc.InitMiddlewares(cmdable, handler)
 	db := ioc.InitDB()
 	userDAO := dao.NewUserDAO(db)
 	userCache := cache.NewUserCache(cmdable)
@@ -30,7 +32,7 @@ func InitWebServer() *gin.Engine {
 	codeRepository := repository.NewCodeRepository(codeCache)
 	smsService := ioc.InitSMSService()
 	codeService := service.NewCodeService(codeRepository, smsService)
-	userHandler := web.NewUserHandler(userService, codeService)
+	userHandler := web.NewUserHandler(userService, codeService, handler)
 	wechatService := ioc.InitWechatService()
 	oAuth2WechatHandler := web.NewOAuth2WechatHandler(wechatService, userService)
 	engine := ioc.InitWebServer(v, userHandler, oAuth2WechatHandler)

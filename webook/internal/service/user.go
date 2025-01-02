@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 	"errors"
-	"gitee.com/geekbang/basic-go/webook/internal/domain"
-	"gitee.com/geekbang/basic-go/webook/internal/repository"
+	"github.com/LXD-c/basic-go/webook/internal/domain"
+	"github.com/LXD-c/basic-go/webook/internal/repository"
 	"golang.org/x/crypto/bcrypt"
 )
 

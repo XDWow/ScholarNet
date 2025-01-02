@@ -1,7 +1,12 @@
 package main
 
 import (
+	"bytes"
+	"fmt"
+	"github.com/fsnotify/fsnotify"
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 	"net/http"
 )
 
@@ -12,12 +17,68 @@ func main() {
 	//
 	//u := initUser(db, rdb)
 	//u.RegisterRoutes(server)
+	
+	initViperV1()
 	server := InitWebServer()
 	server.GET("/hello", func(c *gin.Context) {
 		c.String(http.StatusOK, "你好！")
 	})
 
 	server.Run(":8080")
+}
+func initViperReader() {
+	viper.SetConfigType("yaml")
+	cfg := `
+db.mysql:
+  dsn: "root:root@tcp(localhost:13316)/webook"
+
+redis:
+  addr: "localhost:6379"
+`
+	err := viper.ReadConfig(bytes.NewReader([]byte(cfg)))
+	if err != nil {
+		panic(err)
+	}
+}
+func initViperV1() {
+	cfile := pflag.String("config", "config/dev.yaml", "指定配置文件路径")
+	pflag.Parse()
+	viper.SetConfigFile(*cfile)
+	// 实时监听配置变更
+	viper.WatchConfig()
+	// 但是它只能告诉你文件变了，不能告诉你，文件的哪些内容变了
+	viper.OnConfigChange(func(e fsnotify.Event) {
+		// 比较好的设计，它会在 e 里面告诉你变更前的数据，和变更后的数据
+		// 更好的设计是，它会直接告诉你差异。
+		fmt.Println(e.Name, e.Op)
+		// 或者自己手动去拿，最后肉眼判断变了没
+		fmt.Println(viper.GetString("db.dsn"))
+	})
+	//viper.SetDefault("db.mysql.dsn",
+	//	"root:root@tcp(localhost:3306)/mysql")
+	//viper.SetConfigFile("config/dev.yaml")
+	//viper.KeyDelimiter("-")
+	err := viper.ReadInConfig()
+	if err != nil {
+		panic(err)
+	}
+}
+
+func initViper() {
+	viper.SetDefault("db.mysql.dsn", "root:root@tcp(localhost:13316)/webook")
+	viper.SetConfigName("dev")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath("./config")
+	// 读取配置到 viper 里面，或者你可以理解为加载到内存里面
+	err := viper.ReadInConfig()
+	if err != nil {
+		panic(err)
+	}
+	// 一般建议一个 viper 就够了
+	//otherViper := viper.New()
+	//otherViper.SetConfigName("myjson")
+	//otherViper.AddConfigPath("./config")
+	//otherViper.SetConfigType("json")
 }
 
 func initWebServer() *gin.Engine {

@@ -2,7 +2,7 @@ package repository
 
 import (
 	"context"
-	"gitee.com/geekbang/basic-go/webook/internal/repository/cache"
+	"github.com/LXD-c/basic-go/webook/internal/repository/cache"
 )
 
 var (

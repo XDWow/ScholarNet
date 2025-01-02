@@ -3,9 +3,9 @@ package web
 import (
 	"bytes"
 	"errors"
-	"gitee.com/geekbang/basic-go/webook/internal/domain"
-	"gitee.com/geekbang/basic-go/webook/internal/service"
-	svcmocks "gitee.com/geekbang/basic-go/webook/internal/service/mocks"
+	"github.com/LXD-c/basic-go/webook/internal/domain"
+	"github.com/LXD-c/basic-go/webook/internal/service"
+	svcmocks "github.com/LXD-c/basic-go/webook/internal/service/mocks"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -152,7 +152,7 @@ func TestUserHandler_SignUp(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 			// signup 用不到codeSvc,只需要一个 userSvc,每个 Case 不一样，所以由 Case 传入
-			h := NewUserHandler(testCase.mock(ctrl), nil)
+			h := NewUserHandler(testCase.mock(ctrl), nil, nil)
 			server := gin.Default()
 			h.RegisterRoutes(server)
 

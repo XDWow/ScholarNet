@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 	"fmt"
-	"gitee.com/geekbang/basic-go/webook/internal/repository"
-	"gitee.com/geekbang/basic-go/webook/internal/service/sms"
+	"github.com/LXD-c/basic-go/webook/internal/repository"
+	"github.com/LXD-c/basic-go/webook/internal/service/sms"
 	"math/rand"
 )
 

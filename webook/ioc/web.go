@@ -1,8 +1,9 @@
 package ioc
 
 import (
-	"gitee.com/geekbang/basic-go/webook/internal/web"
-	"gitee.com/geekbang/basic-go/webook/internal/web/middleware"
+	"github.com/LXD-c/basic-go/webook/internal/web"
+	ijwt "github.com/LXD-c/basic-go/webook/internal/web/jwt"
+	"github.com/LXD-c/basic-go/webook/internal/web/middleware"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
@@ -19,11 +20,11 @@ func InitWebServer(middlewares []gin.HandlerFunc, u *web.UserHandler, w *web.OAu
 	return server
 }
 
-func InitMiddlewares(redisClient redis.Cmdable) []gin.HandlerFunc {
+func InitMiddlewares(redisClient redis.Cmdable, hdl ijwt.Handler) []gin.HandlerFunc {
 	return []gin.HandlerFunc{
 		corsHdl(),
 
-		middleware.NewLoginJWTMiddlewareBuilder().
+		middleware.NewLoginJWTMiddlewareBuilder(hdl).
 			IgnorePaths("/users/signup").
 			IgnorePaths("/users/login_sms/code/send").
 			IgnorePaths("/users/login_sms").
@@ -39,7 +40,7 @@ func corsHdl() gin.HandlerFunc {
 		//是否允许带上用户认证信息（比如 cookie）
 		AllowCredentials: true,
 		AllowHeaders:     []string{"content-type", "Authorization"},
-		ExposeHeaders:    []string{"x-jwt-token"},
+		ExposeHeaders:    []string{"x-jwt-token", "x-refresh-token"},
 		//哪些来源是允许的
 		AllowOriginFunc: func(origin string) bool {
 			if strings.HasPrefix(origin, "http://localhost") {

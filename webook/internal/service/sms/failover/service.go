@@ -3,7 +3,7 @@ package failover
 import (
 	"context"
 	"errors"
-	"gitee.com/geekbang/basic-go/webook/internal/service/sms"
+	"github.com/LXD-c/basic-go/webook/internal/service/sms"
 	"log"
 	"sync/atomic"
 )

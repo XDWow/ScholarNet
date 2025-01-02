@@ -3,9 +3,9 @@ package service
 import (
 	"context"
 	"errors"
-	"gitee.com/geekbang/basic-go/webook/internal/domain"
-	"gitee.com/geekbang/basic-go/webook/internal/repository"
-	repomocks "gitee.com/geekbang/basic-go/webook/internal/repository/mocks"
+	"github.com/LXD-c/basic-go/webook/internal/domain"
+	"github.com/LXD-c/basic-go/webook/internal/repository"
+	repomocks "github.com/LXD-c/basic-go/webook/internal/repository/mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"golang.org/x/crypto/bcrypt"

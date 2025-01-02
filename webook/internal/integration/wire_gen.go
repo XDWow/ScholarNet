@@ -7,12 +7,12 @@
 package integration
 
 import (
-	"gitee.com/geekbang/basic-go/webook/internal/repository"
-	"gitee.com/geekbang/basic-go/webook/internal/repository/cache"
-	"gitee.com/geekbang/basic-go/webook/internal/repository/dao"
-	"gitee.com/geekbang/basic-go/webook/internal/service"
-	"gitee.com/geekbang/basic-go/webook/internal/web"
-	"gitee.com/geekbang/basic-go/webook/ioc"
+	"github.com/LXD-c/basic-go/webook/internal/repository"
+	"github.com/LXD-c/basic-go/webook/internal/repository/cache"
+	"github.com/LXD-c/basic-go/webook/internal/repository/dao"
+	"github.com/LXD-c/basic-go/webook/internal/service"
+	"github.com/LXD-c/basic-go/webook/internal/web"
+	"github.com/LXD-c/basic-go/webook/ioc"
 	"github.com/gin-gonic/gin"
 )
 

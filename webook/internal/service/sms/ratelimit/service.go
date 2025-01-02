@@ -3,8 +3,8 @@ package ratelimit
 import (
 	"context"
 	"fmt"
-	"gitee.com/geekbang/basic-go/webook/internal/service/sms"
-	"gitee.com/geekbang/basic-go/webook/pkg/ratelimit"
+	"github.com/LXD-c/basic-go/webook/internal/service/sms"
+	"github.com/LXD-c/basic-go/webook/pkg/ratelimit"
 )
 
 // 这里定义错误的原因是：可以通过改变首字母大小写，随时决定是否将该错误暴露出去

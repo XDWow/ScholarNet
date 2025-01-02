@@ -1,7 +1,7 @@
 package ioc
 
 import (
-	"gitee.com/geekbang/basic-go/webook/internal/service/oauth2/wechat"
+	"github.com/LXD-c/basic-go/webook/internal/service/oauth2/wechat"
 	"os"
 )
 

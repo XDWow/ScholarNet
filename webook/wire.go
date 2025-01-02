@@ -3,12 +3,13 @@
 package main
 
 import (
-	"gitee.com/geekbang/basic-go/webook/internal/repository"
-	"gitee.com/geekbang/basic-go/webook/internal/repository/cache"
-	"gitee.com/geekbang/basic-go/webook/internal/repository/dao"
-	"gitee.com/geekbang/basic-go/webook/internal/service"
-	"gitee.com/geekbang/basic-go/webook/internal/web"
-	"gitee.com/geekbang/basic-go/webook/ioc"
+	"github.com/LXD-c/basic-go/webook/internal/repository"
+	"github.com/LXD-c/basic-go/webook/internal/repository/cache"
+	"github.com/LXD-c/basic-go/webook/internal/repository/dao"
+	"github.com/LXD-c/basic-go/webook/internal/service"
+	"github.com/LXD-c/basic-go/webook/internal/web"
+	"github.com/LXD-c/basic-go/webook/internal/web/jwt"
+	"github.com/LXD-c/basic-go/webook/ioc"
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
 )
@@ -35,10 +36,11 @@ func InitWebServer() *gin.Engine {
 
 		web.NewUserHandler,
 		web.NewOAuth2WechatHandler,
+		jwt.NewRedisJwtHandler,
 		// 你中间件呢？
 		// 你注册路由呢？
 		// 你这个地方没有用到前面的任何东西
-		//gin.Default,
+		// gin.Default,
 		ioc.InitWebServer,
 		ioc.InitMiddlewares,
 	)
