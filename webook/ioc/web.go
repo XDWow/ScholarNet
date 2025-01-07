@@ -1,9 +1,12 @@
 package ioc
 
 import (
+	"context"
 	"github.com/LXD-c/basic-go/webook/internal/web"
 	ijwt "github.com/LXD-c/basic-go/webook/internal/web/jwt"
 	"github.com/LXD-c/basic-go/webook/internal/web/middleware"
+	"github.com/LXD-c/basic-go/webook/pkg/ginx/middlewares/logger"
+	logger2 "github.com/LXD-c/basic-go/webook/pkg/logger"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
@@ -20,16 +23,21 @@ func InitWebServer(middlewares []gin.HandlerFunc, u *web.UserHandler, w *web.OAu
 	return server
 }
 
-func InitMiddlewares(redisClient redis.Cmdable, hdl ijwt.Handler) []gin.HandlerFunc {
+func InitMiddlewares(redisClient redis.Cmdable, jwthdl ijwt.Handler, l logger2.LoggerV1) []gin.HandlerFunc {
 	return []gin.HandlerFunc{
 		corsHdl(),
-
-		middleware.NewLoginJWTMiddlewareBuilder(hdl).
+		logger.NewBuilder(func(ctx context.Context, al *logger.AccessLog) {
+			l.Debug("HTTP请求", logger2.Field{Key: "al", Value: al})
+		}).AllowReqBody().AllowRespBody().Build(),
+		middleware.NewLoginJWTMiddlewareBuilder(jwthdl).
 			IgnorePaths("/users/signup").
+			IgnorePaths("/users/refresh_token").
 			IgnorePaths("/users/login_sms/code/send").
 			IgnorePaths("/users/login_sms").
-			IgnorePaths("/users/login").Build(),
-
+			IgnorePaths("/oauth2/wechat/authurl").
+			IgnorePaths("/oauth2/wechat/callback").
+			IgnorePaths("/users/login").
+			Build(),
 		//ratelimit.NewBuilder(redisClient,)
 	}
 }

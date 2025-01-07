@@ -40,6 +40,27 @@ redis:
 		panic(err)
 	}
 }
+func initViperRemote() {
+	err := viper.AddRemoteProvider("etcd3",
+		// 通过 webook 和其他使用 etcd 的区别出来
+		"http://127.0.0.1:12379", "/webook")
+	if err != nil {
+		panic(err)
+	}
+	viper.SetConfigFile("yaml")
+	err = viper.WatchRemoteConfig()
+	if err != nil {
+		panic(err)
+	}
+	viper.OnConfigChange(func(e fsnotify.Event) {
+		fmt.Println("config file changed:", e.Name, e.Op)
+	})
+	err = viper.ReadRemoteConfig()
+	if err != nil {
+		panic(err)
+	}
+}
+
 func initViperV1() {
 	cfile := pflag.String("config", "config/dev.yaml", "指定配置文件路径")
 	pflag.Parse()

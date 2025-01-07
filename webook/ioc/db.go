@@ -15,17 +15,18 @@ func InitDB() *gorm.DB {
 	type Config struct {
 		DSN string `yaml:"dsn"`
 	}
-	//var cfg = Config{
-	//	DSN: "root:root@tcp(localhost:13316)/webook_default",
-	//}
-	// remote 不支持 key 的切割
-	//viper.Unmarshal("db",&cfg)
-	dsn := viper.GetString("db")
-	println(dsn)
+	// 这样就定义好了默认值
+	var cfg = Config{
+		DSN: "root:root@tcp(localhost:13316)/webook_default",
+	}
+	// remote 不支持 key 的切割:db.mysql
+	err := viper.UnmarshalKey("db", &cfg)
+	//dsn := viper.GetString("db.mysql")
+	//println(dsn)
 	//if err != nil {
 	//	panic(err)
 	//}
-	db, err := gorm.Open(mysql.Open(dsn))
+	db, err := gorm.Open(mysql.Open(cfg.DSN))
 	if err != nil {
 		panic(err)
 	}

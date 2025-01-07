@@ -1,5 +1,6 @@
 db:
-  dsn:"root:root@tcp(localhost:13316)/webook"
+# dsn:"root:root@tcp(localhost:13316)/webook" 值与dsn:之间要空格，才能识别
+  dsn: "root:root@tcp(localhost:13316)/webook"
 
 redis:
-  addr:"localhost:6379"
+  addr: "localhost:6379"

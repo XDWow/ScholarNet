@@ -16,19 +16,23 @@ type OAuth2WechatHandler struct {
 	svc      wechat.Service
 	userSvc  service.UserService
 	stateKey []byte
-	WechatHandlerConfig
 	ijwt.Handler
+	cfg WechatHandlerConfig
 }
 
 type WechatHandlerConfig struct {
 	Secure bool
+	// ...
 }
 
-func NewOAuth2WechatHandler(svc wechat.Service, userSvc service.UserService) *OAuth2WechatHandler {
+func NewOAuth2WechatHandler(svc wechat.Service, userSvc service.UserService,
+	jwtHdl ijwt.Handler, cfg WechatHandlerConfig) *OAuth2WechatHandler {
 	return &OAuth2WechatHandler{
 		svc:      svc,
 		userSvc:  userSvc,
+		Handler:  jwtHdl,
 		stateKey: []byte("95osj3fUD7foxmlYdDbncXz4VD2igvf1"),
+		cfg:      cfg,
 	}
 }
 
@@ -40,7 +44,7 @@ func (h *OAuth2WechatHandler) RegisterRoutes(server *gin.Engine) {
 
 func (h *OAuth2WechatHandler) AuthURL(ctx *gin.Context) {
 	state := uuid.New()
-	url, err := h.svc.AuthURL(ctx, state)
+	url, err := h.svc.AuthURL(state)
 	if err != nil {
 		ctx.JSON(http.StatusOK, Result{
 			Code: 5,
@@ -59,7 +63,7 @@ func (h *OAuth2WechatHandler) AuthURL(ctx *gin.Context) {
 	//将 token 存 Cookie 里面
 	ctx.SetCookie("jwt-state", tokenStr, 600,
 		"/oauth2/wechat/callback",
-		"", h.WechatHandlerConfig.Secure, true)
+		"", h.cfg.Secure, true)
 	ctx.JSON(http.StatusOK, Result{
 		Data: url,
 	})
