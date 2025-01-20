@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/LXD-c/basic-go/webook/internal/domain"
 	"github.com/LXD-c/basic-go/webook/internal/repository"
+	"github.com/LXD-c/basic-go/webook/pkg/logger"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -23,11 +24,13 @@ type UserService interface {
 
 type userService struct {
 	repo repository.UserRepository
+	l    logger.LoggerV1
 }
 
-func NewUserService(repo repository.UserRepository) UserService {
+func NewUserService(repo repository.UserRepository, l logger.LoggerV1) UserService {
 	return &userService{
 		repo: repo,
+		l:    l,
 	}
 }
 

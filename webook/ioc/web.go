@@ -14,16 +14,17 @@ import (
 	"time"
 )
 
-func InitWebServer(middlewares []gin.HandlerFunc, u *web.UserHandler, w *web.OAuth2WechatHandler) *gin.Engine {
+func InitWebServer(middlewares []gin.HandlerFunc, u *web.UserHandler, w *web.OAuth2WechatHandler, a *web.ArticleHandler) *gin.Engine {
 	server := gin.Default()
 	//middlewares...将切片解包为多个独立的参数
 	server.Use(middlewares...)
 	u.RegisterRoutes(server)
 	w.RegisterRoutes(server)
+	a.RegisterRoutes(server)
 	return server
 }
 
-func InitMiddlewares(redisClient redis.Cmdable, jwthdl ijwt.Handler, l logger2.LoggerV1) []gin.HandlerFunc {
+func InitMiddlewares(redisClient redis.Cmdable, l logger2.LoggerV1, jwthdl ijwt.Handler) []gin.HandlerFunc {
 	return []gin.HandlerFunc{
 		corsHdl(),
 		logger.NewBuilder(func(ctx context.Context, al *logger.AccessLog) {

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/LXD-c/basic-go/webook/internal/domain"
+	"github.com/LXD-c/basic-go/webook/pkg/logger"
 	"net/http"
 	"net/url"
 )
@@ -21,14 +22,16 @@ type service struct {
 	appId     string
 	appSecret string
 	client    *http.Client
+	l         logger.LoggerV1
 }
 
-func NewService(appId string, appSecret string) Service {
+func NewService(appId string, appSecret string, l logger.LoggerV1) Service {
 	return &service{
 		appId:     appId,
 		appSecret: appSecret,
 		// 依赖注入，但是没完全注入
 		client: http.DefaultClient,
+		l:      l,
 	}
 }
 

@@ -9,3 +9,8 @@ docker:
 	@go build -tags=k8s -o webook .
 	@docker rmi -f jj/webook:v0.0.1
 	@docker build -t jj/webook:v0.0.1 .
+
+mockgen -source webook/internal/repository/user.go -destination webook/internal/repository/mocks/user.mock.go -package repomocks
+mockgen -source webook\internal\service\article.go -destination webook\internal\service\mocks\article.mock.go -package svcmocks
+mockgen -source webook\internal\repository\article\article_author.go -destination webook\internal\repository\article\mocks\article_author.mock.go -package repositorymocks
+mockgen -source webook\internal\repository\article\article_reader.go -destination webook\internal\repository\article\mocks\article_reader.mock.go -package repositorymocks
