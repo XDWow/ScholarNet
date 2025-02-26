@@ -7,6 +7,7 @@ type User struct {
 	Email          string
 	Password       string
 	Phone          string
+	Nickname       string
 	Wechat_openID  string
 	Wechat_unionID string
 

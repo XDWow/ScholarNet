@@ -1,5 +1,7 @@
 package domain
 
+import "time"
+
 // Article 可以同时表达线上库和制作库的概念吗？
 // 即可以同时表达，作者眼中的 Article 和读者眼中的 Article 吗？
 type Article struct {
@@ -8,6 +10,22 @@ type Article struct {
 	Content string `json:"content"`
 	Author  Author `json:"author"`
 	Status  ArticleStatus
+	Ctime   time.Time
+	Utime   time.Time
+}
+
+func (a Article) Abstract() string {
+	// 要考虑中文问题
+	// 将 string 转换为 rune 切片，每个 rune 代表一个完整的 Unicode 字符
+	// Unicode 是全球通用的字符编码标准，它分配了一个唯一的编号（码点，Code Point）给每个字符：汉字，拉丁字母等等
+	// 自动识别为汉字，变为汉字序列
+	cs := []rune(a.Content)
+	if len(cs) < 100 {
+		return a.Content
+	}
+	// 英文怎么截取一个完整的单词，我的看法是……不需要纠结，就截断拉到
+	// 词组、介词，往后找标点符号
+	return string(cs[:100])
 }
 
 // 这样做的好处是：可以在 ArticleStatus 上定义一些方法，供 Status 使用

@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	ErrUserDuplicate  = errors.New("用户账号冲突！")
-	ErrRecordNotFound = gorm.ErrRecordNotFound
+	ErrUserDuplicate = errors.New("用户账号冲突！")
+	ErrUserNotFound  = gorm.ErrRecordNotFound
 )
 
 type UserDAO interface {

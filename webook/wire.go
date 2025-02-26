@@ -3,41 +3,52 @@
 package main
 
 import (
+	"github.com/LXD-c/basic-go/webook/internal/events/article"
 	"github.com/LXD-c/basic-go/webook/internal/repository"
-	"github.com/LXD-c/basic-go/webook/internal/repository/article"
+	article2 "github.com/LXD-c/basic-go/webook/internal/repository/article"
 	"github.com/LXD-c/basic-go/webook/internal/repository/cache"
 	"github.com/LXD-c/basic-go/webook/internal/repository/dao"
-	article2 "github.com/LXD-c/basic-go/webook/internal/repository/dao/article"
+	article3 "github.com/LXD-c/basic-go/webook/internal/repository/dao/article"
 	"github.com/LXD-c/basic-go/webook/internal/service"
 	"github.com/LXD-c/basic-go/webook/internal/web"
-	"github.com/LXD-c/basic-go/webook/internal/web/jwt"
+	ijwt "github.com/LXD-c/basic-go/webook/internal/web/jwt"
 	"github.com/LXD-c/basic-go/webook/ioc"
-	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
 )
 
-func InitWebServer() *gin.Engine {
+func InitWebServer() *App {
 	wire.Build(
 		//最基础的第三方依赖
 		ioc.InitDB, ioc.InitRedis,
 		ioc.InitLogger,
+		ioc.InitKafka,
+		ioc.NewConsumers,
+		ioc.NewSyncProducer,
+
+		// consumer
+		article.NewInteractiveReadEventBatchConsumer,
+		article.NewKafkaProducer,
 
 		//初始化 DAO
 		dao.NewUserDAO,
-		article2.NewGORMArticleDAO,
+		article3.NewGORMArticleDAO,
+		dao.NewGORMInteractiveDAO,
 
 		cache.NewUserCache,
 		cache.NewCodeCache,
-
+		cache.NewRedisInteractiveCache,
+		cache.NewRedisArticleCache,
 		repository.NewUserRepository,
 		repository.NewCodeRepository,
-		article.NewArticleRepository,
+		article2.NewArticleRepository,
+		repository.NewCachedInteractiveRepository,
 		//article.NewArticleReaderRepository,
 		//article.NewArticleAuthorRepository,
 
 		service.NewUserService,
 		service.NewCodeService,
 		service.NewArticleService,
+		service.NewInteractiveServiceImpl,
 
 		// 直接基于内存实现
 		ioc.InitSMSService,
@@ -46,7 +57,7 @@ func InitWebServer() *gin.Engine {
 		web.NewUserHandler,
 		web.NewOAuth2WechatHandler,
 		ioc.NewWechatHandlerConfig,
-		jwt.NewRedisJWTHandler,
+		ijwt.NewRedisJWTHandler,
 		web.NewArticleHandler,
 		// 你中间件呢？
 		// 你注册路由呢？
@@ -54,6 +65,8 @@ func InitWebServer() *gin.Engine {
 		// gin.Default,
 		ioc.InitWebServer,
 		ioc.InitMiddlewares,
+		// 组装我这个结构体的所有字段
+		wire.Struct(new(App), "*"),
 	)
-	return new(gin.Engine)
+	return new(App)
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/fsnotify/fsnotify"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"net/http"
@@ -19,9 +20,19 @@ func main() {
 	//u.RegisterRoutes(server)
 
 	initViperV1()
-	server := InitWebServer()
-	server.GET("/hello", func(c *gin.Context) {
-		c.String(http.StatusOK, "你好！")
+
+	initPrometheus()
+	app := InitWebServer()
+	// Consumer 在我设计下，类似于 Web，或者 GRPC 之类的，是一个顶级入口
+	for _, c := range app.consumers {
+		err := c.Start()
+		if err != nil {
+			panic(err)
+		}
+	}
+	server := app.web
+	server.GET("/hello", func(ctx *gin.Context) {
+		ctx.String(http.StatusOK, "你好，你来了")
 	})
 
 	server.Run(":8080")
@@ -59,6 +70,13 @@ func initViperRemote() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func initPrometheus() {
+	go func() {
+		http.Handle("/metrics", promhttp.Handler())
+		http.ListenAndServe(":8081", nil)
+	}()
 }
 
 func initViperV1() {

@@ -315,7 +315,7 @@ func (u *UserHandler) ProfileJWT(ctx *gin.Context) {
 		ctx.String(http.StatusOK, "系统错误")
 		return
 	}
-	println(claims.Uid)
+	println(claims.Id)
 	ctx.String(http.StatusOK, "这是 pfofile")
 }
 

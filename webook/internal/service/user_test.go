@@ -6,6 +6,7 @@ import (
 	"github.com/LXD-c/basic-go/webook/internal/domain"
 	"github.com/LXD-c/basic-go/webook/internal/repository"
 	repomocks "github.com/LXD-c/basic-go/webook/internal/repository/mocks"
+	"github.com/LXD-c/basic-go/webook/pkg/logger"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"golang.org/x/crypto/bcrypt"
@@ -107,7 +108,7 @@ func Test_userService_Login(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 			//具体的测试代码
-			svc := NewUserService(testCase.mock(ctrl))
+			svc := NewUserService(testCase.mock(ctrl), &logger.NopLogger{})
 			u, err := svc.Login(context.Background(), testCase.email, testCase.password)
 			assert.Equal(t, testCase.wantUser, u)
 			assert.Equal(t, testCase.wantErr, err)

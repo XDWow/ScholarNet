@@ -3,24 +3,31 @@ package service
 import (
 	"context"
 	"github.com/LXD-c/basic-go/webook/internal/domain"
+	events "github.com/LXD-c/basic-go/webook/internal/events/article"
 	"github.com/LXD-c/basic-go/webook/internal/repository/article"
 	"github.com/LXD-c/basic-go/webook/pkg/logger"
 	"time"
 )
-
+//go:generate mockgen -source=article.go -package=svcmocks -destination=mocks/article.mock.go ArticleService
 type ArticleService interface {
 	Save(ctx context.Context, article domain.Article) (int64, error)
 	Publish(ctx context.Context, art domain.Article) (int64, error)
 	PublishV1(ctx context.Context, article domain.Article) (int64, error)
 	Withdraw(ctx context.Context, art domain.Article) error
+	List(ctx context.Context, uid int64, offset int, limit int) ([]domain.Article, error)
+	// ListPub 只会取 start 七天内的数据
+	ListPub(ctx context.Context, start time.Time, offset, limit int) ([]domain.Article, error)
+	GetById(ctx context.Context, id int64) (domain.Article, error)
+	GetPublishedById(ctx context.Context, id, uid int64) (domain.Article, error)
 }
 
 // 在哪层区分制作库和线上库，就意味着事务概念在哪层
 // 事务概念，一个事务要么全部完成，要么一点都不做
 // 这里代表 Publish 后，两个库的同步，制作库修改了，线上库也一定要修改，不然制作库也别动，可以重新 Publish
 type ArticleServiceImpl struct {
-	repo article.ArticleRepository
-	l    logger.LoggerV1
+	repo     article.ArticleRepository
+	l        logger.LoggerV1
+	producer events.Producer
 
 	// V1：在 Service 层上区分制作库、线上库，依靠两个不同的 repository 来解决这种跨表，或者跨库的问题,
 	author article.ArticleAuthorRepository
@@ -37,11 +44,17 @@ func NewArticleServiceV1(author article.ArticleAuthorRepository,
 	}
 }
 
-func NewArticleService(repo article.ArticleRepository, l logger.LoggerV1) ArticleService {
+func NewArticleService(repo article.ArticleRepository, l logger.LoggerV1, producer events.Producer) ArticleService {
 	return &ArticleServiceImpl{
-		repo: repo,
-		l:    l,
+		repo:     repo,
+		l:        l,
+		producer: producer,
 	}
+}
+
+func (svc *ArticleServiceImpl) ListPub(ctx context.Context,
+	start time.Time, offset, limit int) ([]domain.Article, error) {
+	panic("implement me")
 }
 
 func (s *ArticleServiceImpl) Publish(ctx context.Context, art domain.Article) (int64, error) {
@@ -103,4 +116,31 @@ func (s *ArticleServiceImpl) Save(ctx context.Context, art domain.Article) (int6
 func (s *ArticleServiceImpl) Withdraw(ctx context.Context, art domain.Article) error {
 	// art.Status = domain.ArticleStatusPrivate 然后直接把整个 art 往下传
 	return s.repo.SyncStatus(ctx, art.Id, art.Author.Id, domain.ArticleStatusPrivate)
+}
+func (s *ArticleServiceImpl) List(ctx context.Context, uid int64, offset int, limit int) ([]domain.Article, error) {
+	return s.repo.List(ctx, uid, offset, limit)
+}
+
+func (s *ArticleServiceImpl) GetById(ctx context.Context, id int64) (domain.Article, error) {
+	return s.repo.GetByID(ctx, id)
+}
+
+func (s *ArticleServiceImpl) GetPublishedById(ctx context.Context, id, uid int64) (domain.Article, error) {
+	// 另一个选项，在这里组装 Author，调用 UserService
+	art, err := s.repo.GetPublishedByID(ctx, id)
+	if err == nil {
+		go func() {
+			// 生产者也可以通过改批量来提高性能
+			er := s.producer.ProduceReadEvent(ctx, events.ReadEvent{
+				// 即便你的消费者要用 art 的里面的数据，
+				// 让它去查询，你不要在 event 里面带
+				Uid: uid,
+				Aid: id,
+			})
+			if er != nil {
+				s.l.Error("发送读者阅读事件失败")
+			}
+		}()
+	}
+	return art, err
 }

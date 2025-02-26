@@ -1,0 +1,127 @@
+package service
+
+import (
+	"context"
+	"github.com/LXD-c/basic-go/webook/internal/domain"
+	"github.com/ecodeclub/ekit/queue"
+	"github.com/ecodeclub/ekit/slice"
+	"log"
+	"math"
+	"time"
+)
+
+type RankingService interface {
+	TopN(ctx context.Context) error
+	//TopN(ctx context.Context, n int64) error
+}
+
+type BatchRankingService struct {
+	artSvc    ArticleService
+	intrSvc   InteractiveService
+	batchSize int
+	n         int
+	// scoreFunc 不能返回负数
+	scoreFunc func(t time.Time, likeCnt int64) float64
+}
+
+func NewBatchRankingService(artSvc ArticleService, intrSvc InteractiveService) *BatchRankingService {
+	return &BatchRankingService{
+		artSvc:    artSvc,
+		intrSvc:   intrSvc,
+		batchSize: 100,
+		n:         100,
+		scoreFunc: func(t time.Time, likeCnt int64) float64 {
+			return float64(likeCnt-1) / math.Pow(float64(likeCnt+2), 1.5)
+		},
+	}
+}
+
+func (s *BatchRankingService) TopN(ctx context.Context) error {
+	arts, err := s.topN(ctx)
+	if err != nil {
+		return err
+	}
+	// 存缓存
+	log.Println(arts)
+	return nil
+}
+
+// 返回arts，方便测试
+func (s *BatchRankingService) topN(ctx context.Context) ([]domain.Article, error) {
+	// 我只取七天内的数据
+	now := time.Now()
+	offset := 0
+
+	// 构造基于最小根堆的有限队列
+	type Score struct {
+		art   domain.Article
+		score float64
+	}
+	// 这里可以用非并发安全
+	topN := queue.NewConcurrentPriorityQueue[Score](s.n,
+		func(src Score, dst Score) int {
+			if src.score > dst.score {
+				return 1
+			} else if src.score == dst.score {
+				return 0
+			} else {
+				return -1
+			}
+		})
+
+	for {
+		// 拿一批
+		arts, err := s.artSvc.ListPub(ctx, now, offset, s.batchSize)
+		if err != nil {
+			return nil, err
+		}
+		ids := slice.Map[domain.Article, int64](arts, func(idx int, src domain.Article) int64 {
+			return src.Id
+		})
+		// 要去找到对应的点赞数据
+		intrs, err := s.intrSvc.GetByIds(ctx, "article", ids)
+		if err != nil {
+			return nil, err
+		}
+		// 计算 score
+		// 并决定是否要放入优先队列，即topN
+		for _, art := range arts {
+			intr := intrs[art.Id]
+			score := s.scoreFunc(art.Utime, intr.LikeCnt)
+			// 我要考虑，我这个 score 在不在前一百名
+			// 两种情况：1、队列未满，直接入 2、队列满了，跟堆顶最小的比
+			err = topN.Enqueue(Score{
+				art:   art,
+				score: score,
+			})
+
+			if err == queue.ErrOutOfCapacity {
+				val, _ := topN.Peek()
+				if val.score < score {
+					_, _ = topN.Dequeue()
+					err = topN.Enqueue(Score{
+						art:   art,
+						score: score,
+					})
+				}
+			}
+		}
+		// 一批已经处理完了，问题来了，我要不要进入下一批？我怎么知道还有没有？
+		if len(arts) < s.batchSize {
+			// 我这一批都没取够，我当然没有下一批了
+			break
+		}
+		// 下一批
+		offset += len(arts)
+	}
+	res := make([]domain.Article, s.n)
+	for i := s.n - 1; i >= 0; i-- {
+		val, err := topN.Dequeue()
+		if err != nil {
+			// 取完了，不够n
+			break
+		}
+		res[i] = val.art
+	}
+	return res, nil
+}

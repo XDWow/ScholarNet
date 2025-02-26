@@ -20,7 +20,7 @@ type UserClaims struct {
 	//RegisteredClaims 实现了这个接口
 	jwt.RegisteredClaims
 	//你自己要放进去token的数据
-	Uid  int64
+	Id   int64
 	Ssid string
 	// 自己随便加,这里短 token 容易泄露，可以加一个校验机制，提升安全性
 	UserAgent string
