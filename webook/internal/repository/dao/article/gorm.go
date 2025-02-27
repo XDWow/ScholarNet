@@ -59,6 +59,16 @@ func NewGORMArticleDAO(db *gorm.DB) ArticleDAO {
 	}
 }
 
+func (dao *GORMArticleDAO) ListPub(ctx context.Context,
+	start time.Time,
+	offset int, limit int) ([]Article, error) {
+	var arts []Article
+	err := dao.db.WithContext(ctx).
+		Where("utime > ?", start.UnixMilli()).
+		Order("utime DESC").Offset(offset).Limit(limit).Find(&arts).Error
+	return arts, err
+}
+
 func (dao *GORMArticleDAO) SyncStatus(ctx context.Context, author, id int64, status uint8) error {
 	now := time.Now().UnixMilli()
 	return dao.db.Transaction(func(tx *gorm.DB) error {

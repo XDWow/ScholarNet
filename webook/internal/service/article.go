@@ -8,6 +8,7 @@ import (
 	"github.com/LXD-c/basic-go/webook/pkg/logger"
 	"time"
 )
+
 //go:generate mockgen -source=article.go -package=svcmocks -destination=mocks/article.mock.go ArticleService
 type ArticleService interface {
 	Save(ctx context.Context, article domain.Article) (int64, error)
@@ -52,9 +53,9 @@ func NewArticleService(repo article.ArticleRepository, l logger.LoggerV1, produc
 	}
 }
 
-func (svc *ArticleServiceImpl) ListPub(ctx context.Context,
+func (s *ArticleServiceImpl) ListPub(ctx context.Context,
 	start time.Time, offset, limit int) ([]domain.Article, error) {
-	panic("implement me")
+	return s.repo.ListPub(ctx, start, offset, limit)
 }
 
 func (s *ArticleServiceImpl) Publish(ctx context.Context, art domain.Article) (int64, error) {

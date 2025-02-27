@@ -14,6 +14,21 @@ import (
 	ijwt "github.com/LXD-c/basic-go/webook/internal/web/jwt"
 	"github.com/LXD-c/basic-go/webook/ioc"
 	"github.com/google/wire"
+	rlock "github.com/gotomicro/redis-lock"
+)
+
+var interactiveSvcProvider = wire.NewSet(
+	service.NewInteractiveServiceImpl,
+	repository.NewCachedInteractiveRepository,
+	dao.NewGORMInteractiveDAO,
+	cache.NewRedisInteractiveCache,
+)
+
+var rankingSvcProvider = wire.NewSet(
+	service.NewBatchRankingService,
+	repository.NewCachedRankingRepository,
+	cache.NewRankingRedisCache,
+	cache.NewRankingLocalCache,
 )
 
 func InitWebServer() *App {
@@ -24,6 +39,12 @@ func InitWebServer() *App {
 		ioc.InitKafka,
 		ioc.NewConsumers,
 		ioc.NewSyncProducer,
+		rlock.NewClient,
+
+		interactiveSvcProvider,
+		rankingSvcProvider,
+		ioc.InitJobs,
+		ioc.InitRankingJob,
 
 		// consumer
 		article.NewInteractiveReadEventBatchConsumer,
@@ -32,23 +53,20 @@ func InitWebServer() *App {
 		//初始化 DAO
 		dao.NewUserDAO,
 		article3.NewGORMArticleDAO,
-		dao.NewGORMInteractiveDAO,
 
 		cache.NewUserCache,
 		cache.NewCodeCache,
-		cache.NewRedisInteractiveCache,
 		cache.NewRedisArticleCache,
+
 		repository.NewUserRepository,
 		repository.NewCodeRepository,
 		article2.NewArticleRepository,
-		repository.NewCachedInteractiveRepository,
 		//article.NewArticleReaderRepository,
 		//article.NewArticleAuthorRepository,
 
 		service.NewUserService,
 		service.NewCodeService,
 		service.NewArticleService,
-		service.NewInteractiveServiceImpl,
 
 		// 直接基于内存实现
 		ioc.InitSMSService,

@@ -3,9 +3,9 @@ package service
 import (
 	"context"
 	"github.com/LXD-c/basic-go/webook/internal/domain"
+	"github.com/LXD-c/basic-go/webook/internal/repository"
 	"github.com/ecodeclub/ekit/queue"
 	"github.com/ecodeclub/ekit/slice"
-	"log"
 	"math"
 	"time"
 )
@@ -18,20 +18,23 @@ type RankingService interface {
 type BatchRankingService struct {
 	artSvc    ArticleService
 	intrSvc   InteractiveService
+	repo      repository.RankingRepository
 	batchSize int
 	n         int
 	// scoreFunc 不能返回负数
 	scoreFunc func(t time.Time, likeCnt int64) float64
 }
 
-func NewBatchRankingService(artSvc ArticleService, intrSvc InteractiveService) *BatchRankingService {
+func NewBatchRankingService(artSvc ArticleService, intrSvc InteractiveService, repo repository.RankingRepository) RankingService {
 	return &BatchRankingService{
 		artSvc:    artSvc,
 		intrSvc:   intrSvc,
+		repo:      repo,
 		batchSize: 100,
 		n:         100,
 		scoreFunc: func(t time.Time, likeCnt int64) float64 {
-			return float64(likeCnt-1) / math.Pow(float64(likeCnt+2), 1.5)
+			sec := time.Since(t).Seconds()
+			return float64(likeCnt-1) / math.Pow(float64(sec+2), 1.5)
 		},
 	}
 }
@@ -42,8 +45,7 @@ func (s *BatchRankingService) TopN(ctx context.Context) error {
 		return err
 	}
 	// 存缓存
-	log.Println(arts)
-	return nil
+	return s.repo.ReplaceTopN(ctx, arts)
 }
 
 // 返回arts，方便测试
@@ -107,8 +109,9 @@ func (s *BatchRankingService) topN(ctx context.Context) ([]domain.Article, error
 			}
 		}
 		// 一批已经处理完了，问题来了，我要不要进入下一批？我怎么知道还有没有？
-		if len(arts) < s.batchSize {
+		if len(arts) < s.batchSize || now.Sub(arts[len(arts)-1].Utime).Hours() > 7*24 {
 			// 我这一批都没取够，我当然没有下一批了
+			// 又或者已经取到了七天之前的数据了，说明可以中断了
 			break
 		}
 		// 下一批

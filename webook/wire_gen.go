@@ -17,6 +17,8 @@ import (
 	"github.com/LXD-c/basic-go/webook/internal/web"
 	"github.com/LXD-c/basic-go/webook/internal/web/jwt"
 	"github.com/LXD-c/basic-go/webook/ioc"
+	"github.com/google/wire"
+	"github.com/gotomicro/redis-lock"
 )
 
 // Injectors from wire.go:
@@ -54,9 +56,23 @@ func InitWebServer() *App {
 	engine := ioc.InitWebServer(v, userHandler, oAuth2WechatHandler, articleHandler)
 	interactiveReadEventBatchConsumer := article3.NewInteractiveReadEventBatchConsumer(client, interactiveRepository, loggerV1)
 	v2 := ioc.NewConsumers(interactiveReadEventBatchConsumer)
+	rankingCache := cache.NewRankingRedisCache(cmdable)
+	rankingLocalCache := cache.NewRankingLocalCache()
+	rankingRepository := repository.NewCachedRankingRepository(rankingCache, rankingLocalCache)
+	rankingService := service.NewBatchRankingService(articleService, interactiveService, rankingRepository)
+	rlockClient := rlock.NewClient(cmdable)
+	rankingJob := ioc.InitRankingJob(rankingService, rlockClient, loggerV1)
+	cron := ioc.InitJobs(loggerV1, rankingJob)
 	app := &App{
 		web:       engine,
 		consumers: v2,
+		cron:      cron,
 	}
 	return app
 }
+
+// wire.go:
+
+var interactiveSvcProvider = wire.NewSet(service.NewInteractiveServiceImpl, repository.NewCachedInteractiveRepository, dao.NewGORMInteractiveDAO, cache.NewRedisInteractiveCache)
+
+var rankingSvcProvider = wire.NewSet(service.NewBatchRankingService, repository.NewCachedRankingRepository, cache.NewRankingRedisCache, cache.NewRankingLocalCache)

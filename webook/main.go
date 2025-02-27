@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"github.com/fsnotify/fsnotify"
 	"github.com/gin-gonic/gin"
@@ -9,6 +10,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"net/http"
+	"time"
 )
 
 func main() {
@@ -30,13 +32,27 @@ func main() {
 			panic(err)
 		}
 	}
+	app.cron.Start()
+
 	server := app.web
 	server.GET("/hello", func(ctx *gin.Context) {
 		ctx.String(http.StatusOK, "你好，你来了")
 	})
 
 	server.Run(":8080")
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	closeFunc(ctx)
+	ctx = app.cron.Stop()
+	// 想办法 close ？？
+	// 这边可以考虑超时强制退出，防止有些任务，执行特别长的时间
+	tm := time.NewTimer(time.Minute * 10)
+	select {
+	case <-tm.C:
+	case <-ctx.Done():
+	}
 }
+
 func initViperReader() {
 	viper.SetConfigType("yaml")
 	cfg := `
