@@ -45,7 +45,8 @@ func (l *LoginJWTMiddlewareBuilder) Build() gin.HandlerFunc {
 			return ijwt.AtKey, nil
 		})
 		if err != nil {
-			//token不对，比如伪造的:Bearer xxx1234,就会解析失败返回错误
+			// token不对，比如伪造的:Bearer xxx1234,就会解析失败返回错误
+			// token 过期
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
@@ -64,7 +65,7 @@ func (l *LoginJWTMiddlewareBuilder) Build() gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
-		ctx.Set("claims", claims)
+		ctx.Set("users", claims)
 
 		// 你以为的退出登录，没有用的,别人拿到你的 token，valid 随便改
 		//token.Valid = false

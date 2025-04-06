@@ -3,6 +3,10 @@
 package main
 
 import (
+	"github.com/LXD-c/basic-go/webook/interactive/events"
+	repository2 "github.com/LXD-c/basic-go/webook/interactive/repository"
+	cache2 "github.com/LXD-c/basic-go/webook/interactive/repository/cache"
+	dao2 "github.com/LXD-c/basic-go/webook/interactive/repository/dao"
 	"github.com/LXD-c/basic-go/webook/internal/events/article"
 	"github.com/LXD-c/basic-go/webook/internal/repository"
 	article2 "github.com/LXD-c/basic-go/webook/internal/repository/article"
@@ -19,9 +23,9 @@ import (
 
 var interactiveSvcProvider = wire.NewSet(
 	service.NewInteractiveServiceImpl,
-	repository.NewCachedInteractiveRepository,
-	dao.NewGORMInteractiveDAO,
-	cache.NewRedisInteractiveCache,
+	repository2.NewCachedInteractiveRepository,
+	dao2.NewGORMInteractiveDAO,
+	cache2.NewRedisInteractiveCache,
 )
 
 var rankingSvcProvider = wire.NewSet(
@@ -47,7 +51,7 @@ func InitWebServer() *App {
 		ioc.InitRankingJob,
 
 		// consumer
-		article.NewInteractiveReadEventBatchConsumer,
+		events.NewInteractiveReadEventBatchConsumer,
 		article.NewKafkaProducer,
 
 		//初始化 DAO

@@ -48,6 +48,7 @@ func (s *ArticleTestSuite) TearDownTest() {
 
 // TDD-集成测试
 func (s *ArticleTestSuite) TestEdit() {
+	make()
 	t := s.T()
 	testCases := []struct {
 		name string

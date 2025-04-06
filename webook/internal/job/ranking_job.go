@@ -37,6 +37,7 @@ func NewRankingJob(svc service.RankingService,
 func (j *RankingJob) Name() string { return "ranking" }
 
 // 按时间调度的，三分钟一次
+// localLock：为了让本实例中只有一个线程在执行
 func (j *RankingJob) Run() error {
 	j.localLock.Lock()
 	defer j.localLock.Unlock()
@@ -56,8 +57,6 @@ func (j *RankingJob) Run() error {
 		j.lock = lock
 		// 我怎么保证我这里，一直拿着这个锁？？？
 		go func() {
-			j.localLock.Lock()
-			defer j.localLock.Unlock()
 			// 自动续约机制
 			err1 := lock.AutoRefresh(j.timeout/2, time.Second)
 			// 这里说明退出了续约机制
@@ -67,7 +66,9 @@ func (j *RankingJob) Run() error {
 				// 争取下一次，继续抢锁
 				j.l.Error("续约失败", logger.Error(err))
 			}
+			j.localLock.Lock()
 			j.lock = nil
+			defer j.localLock.Unlock()
 			// lock.Unlock(ctx)
 		}()
 	}

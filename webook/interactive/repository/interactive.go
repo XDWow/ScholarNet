@@ -2,18 +2,21 @@ package repository
 
 import (
 	"context"
-	"github.com/LXD-c/basic-go/webook/internal/domain"
-	"github.com/LXD-c/basic-go/webook/internal/repository/cache"
-	"github.com/LXD-c/basic-go/webook/internal/repository/dao"
+	"github.com/LXD-c/basic-go/webook/interactive/domain"
+	"github.com/LXD-c/basic-go/webook/interactive/repository/cache"
+	"github.com/LXD-c/basic-go/webook/interactive/repository/dao"
 	"github.com/LXD-c/basic-go/webook/pkg/logger"
+	"github.com/ecodeclub/ekit/slice"
 )
 
+//go:generate mockgen -source=./interactive.go -package=repomocks -destination=mocks/interactive.mock.go InteractiveRepository
 type InteractiveRepository interface {
 	IncrReadCnt(ctx context.Context, biz string, bizId int64) error
 	BatchIncrReadCnt(ctx context.Context, bizs []string, bizIds []int64) error
 	IncrLike(ctx context.Context, biz string, bizId int64, uid int64) error
 	DecrLike(ctx context.Context, biz string, bizId int64, uid int64) error
 	AddCollectionItem(ctx context.Context, biz string, bizId int64, cid, uid int64) error
+	GetByIds(ctx context.Context, biz string, bizIds []int64) ([]domain.Interactive, error)
 	Get(ctx context.Context, biz string, bizId int64) (domain.Interactive, error)
 	Liked(ctx context.Context, biz string, bizId int64, uid int64) (bool, error)
 	Collected(ctx context.Context, biz string, bizId int64, uid int64) (bool, error)
@@ -99,6 +102,15 @@ func (repo *CachedInteractiveRepository) AddCollectionItem(ctx context.Context, 
 	return repo.cache.IncrCollectCntIfPresent(ctx, biz, bizId)
 }
 
+func (repo *CachedInteractiveRepository) GetByIds(ctx context.Context, biz string, bizIds []int64) ([]domain.Interactive, error) {
+	vals, err := repo.dao.GetByIds(ctx, biz, bizIds)
+	if err != nil {
+		return nil, err
+	}
+	return slice.Map[dao.Interactive, domain.Interactive](vals,
+		func(idx int, src dao.Interactive) domain.Interactive { return repo.toDomain(src) }), nil
+}
+
 func (repo *CachedInteractiveRepository) Get(ctx context.Context, biz string, bizId int64) (domain.Interactive, error) {
 	// 拿阅读数，点赞数和收藏数
 	// 先从缓存拿
@@ -112,10 +124,11 @@ func (repo *CachedInteractiveRepository) Get(ctx context.Context, biz string, bi
 	//}
 
 	// 缓存没有，去数据库拿，并写回缓存
-	intr, err = repo.dao.Get(ctx, biz, bizId)
+	daoIntr, err := repo.dao.Get(ctx, biz, bizId)
 	if err != nil {
 		return domain.Interactive{}, err
 	}
+	intr = repo.toDomain(daoIntr)
 	go func() {
 		er := repo.cache.Set(ctx, biz, bizId, intr)
 		if er != nil {
@@ -132,7 +145,7 @@ func (repo *CachedInteractiveRepository) Liked(ctx context.Context, biz string, 
 	switch err {
 	case nil:
 		return true, nil
-	case dao.ErrRecordNotFound:
+	case dao.ErrDataNotFound:
 		return false, nil
 	// 这才是真正的 错误
 	default:
@@ -145,10 +158,23 @@ func (repo *CachedInteractiveRepository) Collected(ctx context.Context, biz stri
 	switch err {
 	case nil:
 		return true, nil
-	case dao.ErrRecordNotFound:
+	case dao.ErrDataNotFound:
 		return false, nil
 	// 这才是真正的 错误
 	default:
 		return false, err
+	}
+}
+
+// 最简原则：
+// 1. 接收器永远用指针
+// 2. 输入输出都用结构体
+func (repo *CachedInteractiveRepository) toDomain(intr dao.Interactive) domain.Interactive {
+	return domain.Interactive{
+		Biz:        intr.Biz,
+		BizId:      intr.BizId,
+		LikeCnt:    intr.LikeCnt,
+		CollectCnt: intr.CollectCnt,
+		ReadCnt:    intr.ReadCnt,
 	}
 }

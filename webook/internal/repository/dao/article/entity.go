@@ -10,7 +10,7 @@ type Article struct {
 	AuthorId int64 `gorm:"index" bson:"author_id,omitempty"`
 	Status   uint8 `bson:"status,omitempty"`
 	Ctime    int64 `bson:"ctime,omitempty"`
-	Utime    int64 `bson:"utime,omitempty"`
+	Utime    int64 `gorm:"index" bson:"utime,omitempty"`
 }
 
 // PublishedArticle 衍生类型，偷个懒

@@ -85,6 +85,7 @@ func (w responseWriter) WriteHeader(statusCode int) {
 	w.al.Status = statusCode
 	w.ResponseWriter.WriteHeader(statusCode)
 }
+
 func (w responseWriter) Write(data []byte) (int, error) {
 	w.al.RespBody = string(data)
 	return w.ResponseWriter.Write(data)

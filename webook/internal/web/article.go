@@ -2,6 +2,8 @@ package web
 
 import (
 	"fmt"
+	domain2 "github.com/LXD-c/basic-go/webook/interactive/domain"
+	service2 "github.com/LXD-c/basic-go/webook/interactive/service"
 	"github.com/LXD-c/basic-go/webook/internal/domain"
 	"github.com/LXD-c/basic-go/webook/internal/service"
 	ijwt "github.com/LXD-c/basic-go/webook/internal/web/jwt"
@@ -19,11 +21,11 @@ type ArticleHandler struct {
 	svc service.ArticleService
 	l   logger.LoggerV1
 
-	intrSvc service.InteractiveService
+	intrSvc service2.InteractiveService
 	biz     string
 }
 
-func NewArticleHandler(svc service.ArticleService, l logger.LoggerV1, intrSvc service.InteractiveService) *ArticleHandler {
+func NewArticleHandler(svc service.ArticleService, l logger.LoggerV1, intrSvc service2.InteractiveService) *ArticleHandler {
 	return &ArticleHandler{
 		svc:     svc,
 		l:       l,
@@ -101,7 +103,7 @@ func (h *ArticleHandler) Edit(ctx *gin.Context) {
 	if err := ctx.Bind(&req); err != nil {
 		return
 	}
-	c := ctx.MustGet("claims")
+	c := ctx.MustGet("users")
 	claims, ok := c.(*ijwt.UserClaims)
 	if !ok {
 		// 你可以考虑监控住这里
@@ -137,7 +139,7 @@ func (h *ArticleHandler) Withdraw(ctx *gin.Context) {
 	if err := ctx.Bind(&req); err != nil {
 		return
 	}
-	c := ctx.MustGet("claims")
+	c := ctx.MustGet("users")
 	claims, ok := c.(*ijwt.UserClaims)
 	if !ok {
 		ctx.JSON(http.StatusOK, ginx.Result{
@@ -166,6 +168,7 @@ func (h *ArticleHandler) Withdraw(ctx *gin.Context) {
 	})
 }
 
+// 创作者查看自己的文章详情
 func (a *ArticleHandler) Detail(ctx *gin.Context, usr ijwt.UserClaims) (ginx.Result, error) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
@@ -206,7 +209,7 @@ func (a *ArticleHandler) Detail(ctx *gin.Context, usr ijwt.UserClaims) (ginx.Res
 			//Abstract: art.Abstract(),
 			Status:  art.Status.ToUint8(),
 			Content: art.Content,
-			// 这个是创作者看自己的文章列表，也不需要这个字段
+			// 这个是创作者看自己的文章，也不需要这个字段
 			//Author: art.Author
 			Ctime: art.Ctime.Format(time.DateTime),
 			Utime: art.Utime.Format(time.DateTime),
@@ -263,7 +266,7 @@ func (h *ArticleHandler) PubDetail(ctx *gin.Context) {
 		art, err = h.svc.GetPublishedById(ctx, id, uc.Id)
 		return err
 	})
-	var intr domain.Interactive
+	var intr domain2.Interactive
 	eg.Go(func() error {
 		// 要在这里获得这篇文章的计数
 		// 这个地方可以容忍错误,计数有点偏差影响不大
@@ -297,9 +300,10 @@ func (h *ArticleHandler) PubDetail(ctx *gin.Context) {
 			Status:  art.Status.ToUint8(),
 			Content: art.Content,
 			// 要把作者信息带出去
-			Author:     art.Author.Name,
-			Ctime:      art.Ctime.Format(time.DateTime),
-			Utime:      art.Utime.Format(time.DateTime),
+			Author: art.Author.Name,
+			Ctime:  art.Ctime.Format(time.DateTime),
+			Utime:  art.Utime.Format(time.DateTime),
+			// 交互信息
 			Liked:      intr.Liked,
 			Collected:  intr.Collected,
 			ReadCnt:    intr.ReadCnt,

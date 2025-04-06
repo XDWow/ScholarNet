@@ -90,7 +90,7 @@ func (dao *GORMArticleDAO) SyncStatus(ctx context.Context, author, id int64, sta
 		}
 
 		// 修改完制作库，再修改线上库，不需要再验证 author_id 了，前面已经验证过了
-		return tx.Model(&Article{}).Where("id = ?", id).Updates(map[string]interface{}{
+		return tx.Model(&PublishedArticle{}).Where("id = ?", id).Updates(map[string]interface{}{
 			"status": status,
 			"utime":  now,
 		}).Error
@@ -207,6 +207,7 @@ func (dao *GORMArticleDAO) Sync(ctx context.Context, art Article) (int64, error)
 	})
 	return id, err
 }
+
 func (dao *GORMArticleDAO) Insert(ctx context.Context, art Article) (int64, error) {
 	now := time.Now().UnixMilli()
 	art.Ctime = now

@@ -118,6 +118,7 @@ func (s *ArticleServiceImpl) Withdraw(ctx context.Context, art domain.Article) e
 	// art.Status = domain.ArticleStatusPrivate 然后直接把整个 art 往下传
 	return s.repo.SyncStatus(ctx, art.Id, art.Author.Id, domain.ArticleStatusPrivate)
 }
+
 func (s *ArticleServiceImpl) List(ctx context.Context, uid int64, offset int, limit int) ([]domain.Article, error) {
 	return s.repo.List(ctx, uid, offset, limit)
 }

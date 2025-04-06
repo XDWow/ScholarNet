@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	service2 "github.com/LXD-c/basic-go/webook/interactive/service"
 	"github.com/LXD-c/basic-go/webook/internal/domain"
 	"github.com/LXD-c/basic-go/webook/internal/repository"
 	"github.com/ecodeclub/ekit/queue"
@@ -17,7 +18,7 @@ type RankingService interface {
 
 type BatchRankingService struct {
 	artSvc    ArticleService
-	intrSvc   InteractiveService
+	intrSvc   service2.InteractiveService
 	repo      repository.RankingRepository
 	batchSize int
 	n         int
@@ -25,7 +26,7 @@ type BatchRankingService struct {
 	scoreFunc func(t time.Time, likeCnt int64) float64
 }
 
-func NewBatchRankingService(artSvc ArticleService, intrSvc InteractiveService, repo repository.RankingRepository) RankingService {
+func NewBatchRankingService(artSvc ArticleService, intrSvc service2.InteractiveService, repo repository.RankingRepository) RankingService {
 	return &BatchRankingService{
 		artSvc:    artSvc,
 		intrSvc:   intrSvc,
@@ -54,7 +55,7 @@ func (s *BatchRankingService) topN(ctx context.Context) ([]domain.Article, error
 	now := time.Now()
 	offset := 0
 
-	// 构造基于最小根堆的有限队列
+	// 构造基于最小根堆的优先队列
 	type Score struct {
 		art   domain.Article
 		score float64

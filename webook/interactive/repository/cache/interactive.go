@@ -3,8 +3,9 @@ package cache
 import (
 	"context"
 	_ "embed"
+	"errors"
 	"fmt"
-	"github.com/LXD-c/basic-go/webook/internal/domain"
+	"github.com/LXD-c/basic-go/webook/interactive/domain"
 	"github.com/redis/go-redis/v9"
 	"strconv"
 	"time"
@@ -41,20 +42,6 @@ type InteractiveCache interface {
 // key1_like_cnt => 13
 
 func (r *RedisInteractiveCache) IncrReadCntIfPresent(ctx context.Context, biz string, bizId int64) error {
-	// 拿到的结果，可能自增成功了，可能不需要自增（key不存在）
-	// 你要不要返回一个 error 表达 key 不存在？
-	//res, err := r.client.Eval(ctx, luaIncrCnt,
-	//	[]string{r.key(biz, bizId)},
-	//	// read_cnt +1
-	//	"read_cnt", 1).Int()
-	//if err != nil {
-	//	return err
-	//}
-	//if res == 0 {
-	// 这边一般是缓存过期了
-	//	return errors.New("缓存中 key 不存在")
-	//}
-
 	// key1 => map[string]int
 	return r.client.Eval(ctx, luaIncrCnt, []string{r.key(biz, bizId)}, fieldReadCnt, 1).Err()
 }
@@ -68,11 +55,11 @@ func (r *RedisInteractiveCache) DecrLikeCntIfPresent(ctx context.Context, biz st
 }
 
 func (r *RedisInteractiveCache) IncrCollectCntIfPresent(ctx context.Context, biz string, bizId int64) error {
-	return r.client.Eval(ctx, luaIncrCnt, []string{r.key(biz, bizId), fieldCollectCnt}, 1).Err()
+	return r.client.Eval(ctx, luaIncrCnt, []string{r.key(biz, bizId)}, fieldCollectCnt, 1).Err()
 }
 
 func (r *RedisInteractiveCache) DecrCollectCntIfPresent(ctx context.Context, biz string, bizId int64) error {
-	return r.client.Eval(ctx, luaIncrCnt, []string{r.key(biz, bizId), fieldCollectCnt}, -1).Err()
+	return r.client.Eval(ctx, luaIncrCnt, []string{r.key(biz, bizId)}, fieldCollectCnt, -1).Err()
 }
 
 func (r *RedisInteractiveCache) Get(ctx context.Context, biz string, bizId int64) (domain.Interactive, error) {
@@ -89,7 +76,7 @@ func (r *RedisInteractiveCache) Get(ctx context.Context, biz string, bizId int64
 	}
 	// 说明没有这个 key
 	if len(data) == 0 {
-		return domain.Interactive{}, err
+		return domain.Interactive{}, errors.New("not found")
 	}
 
 	// 理论上来说，这里不可能有 error
@@ -97,6 +84,8 @@ func (r *RedisInteractiveCache) Get(ctx context.Context, biz string, bizId int64
 	collectCnt, _ := strconv.ParseInt(data[fieldCollectCnt], 10, 64)
 	likeCnt, _ := strconv.ParseInt(data[fieldLikeCnt], 10, 64)
 	return domain.Interactive{
+		Biz:        biz,
+		BizId:      bizId,
 		ReadCnt:    readCnt,
 		LikeCnt:    likeCnt,
 		CollectCnt: collectCnt,
@@ -122,7 +111,7 @@ type RedisInteractiveCache struct {
 }
 
 func (r *RedisInteractiveCache) key(biz string, bizId int64) string {
-	return fmt.Sprintf("interactive:%s_%d", biz, bizId)
+	return fmt.Sprintf("interactive:%s:%d", biz, bizId)
 }
 
 func NewRedisInteractiveCache(client redis.Cmdable) InteractiveCache {

@@ -116,6 +116,7 @@ func (repo *CachedArticleRepository) List(ctx context.Context, uid int64, offset
 			return data, nil
 		}
 	}
+	// 缓存没拿到
 	res, err := repo.dao.GetByAuthor(ctx, uid, offset, limit)
 	if err != nil {
 		return nil, err

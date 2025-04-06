@@ -1,9 +1,9 @@
-package article
+package events
 
 import (
 	"context"
 	"github.com/IBM/sarama"
-	"github.com/LXD-c/basic-go/webook/internal/repository"
+	"github.com/LXD-c/basic-go/webook/interactive/repository"
 	"github.com/LXD-c/basic-go/webook/pkg/logger"
 	"github.com/LXD-c/basic-go/webook/pkg/saramax"
 	"time"

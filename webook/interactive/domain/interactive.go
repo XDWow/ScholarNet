@@ -13,14 +13,3 @@ type Interactive struct {
 	Liked     bool `json:"liked"`
 	Collected bool `json:"collected"`
 }
-
-type Self struct {
-	Liked     bool `json:"liked"`
-	Collected bool `json:"collected"`
-}
-
-type Collection struct {
-	Name  string
-	Uid   int64
-	Items []Resource
-}

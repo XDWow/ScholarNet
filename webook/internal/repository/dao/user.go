@@ -76,8 +76,8 @@ type User struct {
 	Email    sql.NullString `gorm:"unique"`
 	Password string
 
-	//这样写有什么问题：很多邮箱登录的用户手机都为空，就相等了，违反唯一索引,邮箱同理
-	//	phone    string	`gorm:"unique"`
+	// 这样写有什么问题：很多邮箱登录的用户手机都为空，就相等了，违反唯一索引,邮箱同理
+	// phone    string	`gorm:"unique"`
 
 	//唯一索引允许有多个空值
 	//但不能是多个""，会误解为一个值： 空，那就多个值相同了

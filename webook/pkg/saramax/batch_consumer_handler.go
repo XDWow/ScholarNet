@@ -46,6 +46,7 @@ func (b *BatchHandler[T]) ConsumeClaim(session sarama.ConsumerGroupSession, clai
 			case <-ctx.Done():
 				done = true
 			case msg, ok := <-msgsCh:
+				// 通道关闭了
 				if !ok {
 					cancel()
 					return nil

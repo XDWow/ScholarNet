@@ -3,11 +3,12 @@
 package startup
 
 import (
+	article3 "github.com/LXD-c/basic-go/webook/internal/events/article"
 	"github.com/LXD-c/basic-go/webook/internal/repository"
-	"github.com/LXD-c/basic-go/webook/internal/repository/article"
+	article2 "github.com/LXD-c/basic-go/webook/internal/repository/article"
 	"github.com/LXD-c/basic-go/webook/internal/repository/cache"
 	"github.com/LXD-c/basic-go/webook/internal/repository/dao"
-	article2 "github.com/LXD-c/basic-go/webook/internal/repository/dao/article"
+	"github.com/LXD-c/basic-go/webook/internal/repository/dao/article"
 	"github.com/LXD-c/basic-go/webook/internal/service"
 	"github.com/LXD-c/basic-go/webook/internal/web"
 	ijwt "github.com/LXD-c/basic-go/webook/internal/web/jwt"
@@ -16,22 +17,29 @@ import (
 	"github.com/google/wire"
 )
 
-var thirdProvider = wire.NewSet(InitRedis, InitTestDB, InitLog)
+var thirdProvider = wire.NewSet(InitRedis,
+	NewSyncProducer,
+	InitKafka,
+	InitTestDB, InitLog)
 var userSvcProvider = wire.NewSet(
 	dao.NewUserDAO,
 	cache.NewUserCache,
 	repository.NewUserRepository,
 	service.NewUserService)
+var articlSvcProvider = wire.NewSet(
+	article.NewGORMArticleDAO,
+	article2.NewArticleRepository,
+	service.NewArticleService)
 
 func InitWebServer() *gin.Engine {
 	wire.Build(
 		thirdProvider,
 		userSvcProvider,
-		//articlSvcProvider,
+		articlSvcProvider,
+
+		article3.NewKafkaProducer,
 		cache.NewCodeCache,
-		article2.NewGORMArticleDAO,
 		repository.NewCodeRepository,
-		article.NewArticleRepository,
 		// service 部分
 		// 集成测试我们显式指定使用内存实现
 		ioc.InitSMSService,
@@ -39,12 +47,10 @@ func InitWebServer() *gin.Engine {
 		// 指定啥也不干的 wechat service
 		InitPhantomWechatService,
 		service.NewCodeService,
-		service.NewArticleService,
 		// handler 部分
 		web.NewUserHandler,
 		web.NewOAuth2WechatHandler,
 		web.NewArticleHandler,
-		InitWechatHandlerConfig,
 		ijwt.NewRedisJWTHandler,
 
 		// gin 的中间件
@@ -57,14 +63,16 @@ func InitWebServer() *gin.Engine {
 	return gin.Default()
 }
 
-func InitArticleHandler() *web.ArticleHandler {
+func InitArticleHandler(dao article.ArticleDAO) *web.ArticleHandler {
 	wire.Build(thirdProvider,
-		article2.NewGORMArticleDAO,
+		//userSvcProvider,
+		//cache.NewRedisArticleCache,
+		//wire.InterfaceValue(new(article.ArticleDAO), dao),
+		article3.NewKafkaProducer,
+		article2.NewArticleRepository,
 		service.NewArticleService,
-		web.NewArticleHandler,
-		article.NewArticleRepository,
-	)
-	return &web.ArticleHandler{}
+		web.NewArticleHandler)
+	return new(web.ArticleHandler)
 }
 
 func InitUserSvc() service.UserService {

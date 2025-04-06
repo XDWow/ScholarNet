@@ -52,6 +52,7 @@ func (c *RedisCodeCache) Set(ctx context.Context, biz, phone, code string) error
 		return errors.New("系统错误")
 	}
 }
+
 func (c *RedisCodeCache) Verify(ctx context.Context, biz, phone, inputCode string) (bool, error) {
 	res, err := c.client.Eval(ctx, luaVerifyCode, []string{c.key(biz, phone)}, inputCode).Int()
 	if err != nil {

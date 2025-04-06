@@ -47,7 +47,7 @@ func (svc *codeService) Send(ctx context.Context,
 	}
 	// 到这里算验证码的业务流程都通过了
 
-	//可以发送出去
+	// 可以发送出去
 	err = svc.smsSvc.Send(ctx, codeTplId, []string{code}, phone)
 	//if err != nil {
 	//	这个地方怎么办？

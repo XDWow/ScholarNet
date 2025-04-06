@@ -14,3 +14,5 @@ mockgen -source webook/internal/repository/user.go -destination webook/internal/
 mockgen -source webook\internal\service\article.go -destination webook\internal\service\mocks\article.mock.go -package svcmocks
 mockgen -source webook\internal\repository\article\article_author.go -destination webook\internal\repository\article\mocks\article_author.mock.go -package repositorymocks
 mockgen -source webook\internal\repository\article\article_reader.go -destination webook\internal\repository\article\mocks\article_reader.mock.go -package repositorymocks
+
+protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative user.proto

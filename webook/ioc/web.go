@@ -39,15 +39,18 @@ func InitMiddlewares(redisClient redis.Cmdable, l logger2.LoggerV1, jwthdl ijwt.
 	})
 	return []gin.HandlerFunc{
 		corsHdl(),
+
 		metric.NewBuilder(
-			"geekbang_daming",
+			"basic-go",
 			"webook",
 			"gin_http",
 			"统计 GIN 的 HTTP 接口",
 			"my-instance-1").Build(),
+
 		logger.NewBuilder(func(ctx context.Context, al *logger.AccessLog) {
 			l.Debug("HTTP请求", logger2.Field{Key: "al", Value: al})
 		}).AllowReqBody().AllowRespBody().Build(),
+
 		otelgin.Middleware("webook"),
 		middleware.NewLoginJWTMiddlewareBuilder(jwthdl).
 			IgnorePaths("/users/signup").

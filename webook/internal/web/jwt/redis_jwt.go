@@ -85,7 +85,7 @@ func (h *RedisJwtHandler) ClearToken(ctx *gin.Context) error {
 	ctx.Header("x-refresh-token", "")
 
 	// 后端记录黑名单，以防攻击者拿着 token 访问系统
-	claims := ctx.MustGet("claims").(*UserClaims)
+	claims := ctx.MustGet("users").(*UserClaims)
 	return h.cmd.Set(ctx, fmt.Sprintf("users:ssid:%s", claims.Ssid),
 		"", time.Hour*24*7).Err()
 }
@@ -117,7 +117,7 @@ func (h *RedisJwtHandler) ExtractToken(ctx *gin.Context) string {
 }
 
 func (h *RedisJwtHandler) RefreshToken(ctx *gin.Context) error {
-	// 只有这个接口，拿出来的才是 refresh_token，其它地方都是 access token
+	// 只有这个接口，拿出来的才是 refresh_token，其它地方都是 access_token
 	refreshToken := h.ExtractToken(ctx)
 	var claims RefreshClaims
 	token, err := jwt.ParseWithClaims(refreshToken, &claims, func(token *jwt.Token) (interface{}, error) {
@@ -138,7 +138,7 @@ func (h *RedisJwtHandler) RefreshToken(ctx *gin.Context) error {
 	return nil
 }
 
-func (h RedisJwtHandler) SetStateJWTToken(ctx *gin.Context, State string) (string, error) {
+func (h *RedisJwtHandler) SetStateJWTToken(ctx *gin.Context, State string) (string, error) {
 	//要携带数据，要传入一个Claim接口，用它自带的mapClaim麻烦，自己实现一个接口:继承自带的，再加上要放入的信息
 	claims := StateClaims{
 		RegisteredClaims: jwt.RegisteredClaims{

@@ -2,13 +2,12 @@ package dao
 
 import (
 	"context"
-	"github.com/LXD-c/basic-go/webook/internal/domain"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"time"
 )
 
-var ErrRecordNotFound = gorm.ErrRecordNotFound
+var ErrDataNotFound = gorm.ErrRecordNotFound
 
 type InteractiveDAO interface {
 	IncrReadCnt(ctx context.Context, biz string, bizId int64) error
@@ -19,7 +18,8 @@ type InteractiveDAO interface {
 	GetCollectInfo(ctx context.Context, biz string, bizId, uid int64) (UserCollectionBiz, error)
 	InsertCollectionBiz(ctx context.Context, cb UserCollectionBiz) error
 	DecrCollectCnt(ctx context.Context, biz string, bizId int64) error
-	Get(ctx context.Context, biz string, bizId int64) (domain.Interactive, error)
+	Get(ctx context.Context, biz string, bizId int64) (Interactive, error)
+	GetByIds(ctx context.Context, biz string, bizIds []int64) ([]Interactive, error)
 }
 
 type GORMInteractiveDAO struct {
@@ -43,6 +43,7 @@ func (dao *GORMInteractiveDAO) BatchIncrReadCnt(ctx context.Context, bizs []stri
 
 	// 这里有个疑问：
 	// 既然计数不一定要完全正确，这里有必要开事务来保证全部成功或失败吗
+	// 答：不一定要完全正确，但是也不能放任不管吧xd
 	// 上面的A 没开事务，哪来的开销
 	return dao.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		txDAO := NewGORMInteractiveDAO(tx)
@@ -57,6 +58,10 @@ func (dao *GORMInteractiveDAO) BatchIncrReadCnt(ctx context.Context, bizs []stri
 }
 
 func (dao *GORMInteractiveDAO) IncrReadCnt(ctx context.Context, biz string, bizId int64) error {
+	return dao.incrReadCnt(dao.db.WithContext(ctx), biz, bizId)
+}
+
+func (dao *GORMInteractiveDAO) incrReadCnt(tx *gorm.DB, biz string, bizId int64) error {
 	// DAO 要怎么实现？表结构该怎么设计？
 	// 下面这样：先查询，再更新写回，有并发问题
 	//var intr Interactive
@@ -79,11 +84,9 @@ func (dao *GORMInteractiveDAO) IncrReadCnt(ctx context.Context, biz string, bizI
 	// 有一个没考虑到，就是，我可能根本没这一行
 	// 事实上这里是一个 upsert 的语义
 	now := time.Now().UnixMilli()
-	return dao.db.WithContext(ctx).Clauses(clause.OnConflict{
-		// MySQL 不写
-		//Columns:
+	return tx.Clauses(clause.OnConflict{
 		DoUpdates: clause.Assignments(map[string]any{
-			"read_cnt": gorm.Expr("read_cnt + 1"),
+			"read_cnt": gorm.Expr("`read_cnt` + 1"),
 			"utime":    now,
 		}),
 	}).Create(&Interactive{
@@ -108,7 +111,7 @@ func (dao *GORMInteractiveDAO) InsertLikeInfo(ctx context.Context, biz string, b
 		err := tx.Clauses(clause.OnConflict{
 			DoUpdates: clause.Assignments(map[string]any{
 				"utime":  now,
-				"statue": 1,
+				"status": 1,
 			}),
 		}).Create(&UserLikeBiz{
 			Biz:    biz,
@@ -125,7 +128,7 @@ func (dao *GORMInteractiveDAO) InsertLikeInfo(ctx context.Context, biz string, b
 			// MySQL 不写
 			//Columns:
 			DoUpdates: clause.Assignments(map[string]any{
-				"like_cnt": gorm.Expr("like_cnt + 1"),
+				"like_cnt": gorm.Expr("`like_cnt`+1"),
 				"utime":    now,
 			}),
 		}).Create(&Interactive{
@@ -147,18 +150,24 @@ func (dao *GORMInteractiveDAO) DeleteLikeInfo(ctx context.Context, biz string, b
 		err := tx.Model(&UserLikeBiz{}).
 			Where("biz = ? AND biz_id = ? AND uid = ?", biz, bizId, uid).
 			Updates(map[string]any{
-				"statue": 0,
+				"status": 0,
 				"utime":  now,
 			}).Error
 		if err != nil {
 			return err
 		}
-		return tx.Model(&Interactive{}).
-			Where("biz = ? AND biz_id = ?", biz, bizId).
-			Updates(map[string]any{
+		return tx.Clauses(clause.OnConflict{
+			DoUpdates: clause.Assignments(map[string]any{
 				"utime":    now,
-				"like_cnt": gorm.Expr("like_cnt - 1"),
-			}).Error
+				"like_cnt": gorm.Expr("`like_cnt` - 1"),
+			}),
+		}).Create(&Interactive{
+			LikeCnt: 1,
+			Ctime:   now,
+			Utime:   now,
+			Biz:     biz,
+			BizId:   bizId,
+		}).Error
 	})
 }
 
@@ -178,7 +187,7 @@ func (dao *GORMInteractiveDAO) InsertCollectionBiz(ctx context.Context, cb UserC
 			// MySQL 不写
 			//Columns:
 			DoUpdates: clause.Assignments(map[string]any{
-				"collect_cnt": gorm.Expr("collect_cnt + 1"),
+				"collect_cnt": gorm.Expr("`collect_cnt` + 1"),
 				"utime":       now,
 			}),
 		}).Create(&Interactive{
@@ -197,14 +206,19 @@ func (dao *GORMInteractiveDAO) DecrCollectCnt(ctx context.Context, biz string, b
 		// MySQL 不写
 		//Columns:
 		DoUpdates: clause.Assignments(map[string]any{
-			"collect_cnt": gorm.Expr("collct_cnt - 1"),
+			"collect_cnt": gorm.Expr("`collct_cnt` - 1"),
 			"utime":       now,
 		}),
 	}).Error
 }
+func (dao *GORMInteractiveDAO) GetByIds(ctx context.Context, biz string, bizIds []int64) ([]Interactive, error) {
+	var res []Interactive
+	err := dao.db.WithContext(ctx).Where("biz = ? AND biz_id IN ?", biz, bizIds).Find(&res).Error
+	return res, err
+}
 
-func (dao *GORMInteractiveDAO) Get(ctx context.Context, biz string, bizId int64) (domain.Interactive, error) {
-	var res domain.Interactive
+func (dao *GORMInteractiveDAO) Get(ctx context.Context, biz string, bizId int64) (Interactive, error) {
+	var res Interactive
 	err := dao.db.WithContext(ctx).
 		Where("biz = ? AND biz_id = ?", biz, bizId).
 		First(&res).Error
@@ -214,7 +228,7 @@ func (dao *GORMInteractiveDAO) Get(ctx context.Context, biz string, bizId int64)
 func (dao *GORMInteractiveDAO) GetLikeInfo(ctx context.Context, biz string, bizId, uid int64) (UserLikeBiz, error) {
 	var res UserLikeBiz
 	err := dao.db.WithContext(ctx).
-		Where("biz = ? AND bizId = ? AND uid = ? AND status = ?", biz, bizId, uid, 1).
+		Where("biz = ? AND biz_id = ? AND uid = ? AND status = ?", biz, bizId, uid, 1).
 		First(&res).Error
 	return res, err
 }
@@ -222,7 +236,7 @@ func (dao *GORMInteractiveDAO) GetLikeInfo(ctx context.Context, biz string, bizI
 func (dao *GORMInteractiveDAO) GetCollectInfo(ctx context.Context, biz string, bizId, uid int64) (UserCollectionBiz, error) {
 	var res UserCollectionBiz
 	err := dao.db.WithContext(ctx).
-		Where("biz = ? AND bizId = ? AND uid = ?", biz, bizId, uid).
+		Where("biz = ? AND biz_id = ? AND uid = ?", biz, bizId, uid).
 		First(&res).Error
 	return res, err
 }
@@ -343,17 +357,3 @@ type UserCollectionBiz struct {
 // FROM `collection` as c JOIN `user_collection_biz` as uc
 // ON c.id = uc.cid
 // WHERE c.id IN (1,2,3)
-
-type CollectionItem struct {
-	Cid   int64
-	Cname string
-	BizId int64
-	Biz   string
-}
-
-func (dao *GORMInteractiveDAO) GetItems() ([]CollectionItem, error) {
-	// 不记得构造 JOIN 查询
-	var items []CollectionItem
-	err := dao.db.Raw("", 1, 2, 3).Find(&items).Error
-	return items, err
-}
