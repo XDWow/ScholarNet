@@ -5,6 +5,7 @@ import (
 	intrv1 "github.com/LXD-c/basic-go/webook/api/proto/gen/intr/v1"
 	"github.com/LXD-c/basic-go/webook/interactive/domain"
 	"github.com/LXD-c/basic-go/webook/interactive/service"
+	"google.golang.org/grpc"
 )
 
 // InteractiveServiceServer 我这里只是把 service 包装成一个 grpc 而已
@@ -15,6 +16,13 @@ type InteractiveServiceServer struct {
 	svc service.InteractiveService
 }
 
+func NewInteractiveServiceServer(svc service.InteractiveService) *InteractiveServiceServer {
+	return &InteractiveServiceServer{svc: svc}
+}
+
+func (i *InteractiveServiceServer) Register(server *grpc.Server) {
+	intrv1.RegisterInteractiveServiceServer(server, i)
+}
 func (i *InteractiveServiceServer) IncrReadCnt(ctx context.Context, request *intrv1.IncrReadCntRequest) (*intrv1.IncrReadCntResponse, error) {
 	err := i.svc.IncrReadCnt(ctx, request.GetBiz(), request.GetBizId())
 	return &intrv1.IncrReadCntResponse{}, err

@@ -2,6 +2,7 @@ package dao
 
 import (
 	"context"
+	"github.com/LXD-c/basic-go/webook/pkg/migrator"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"time"
@@ -277,6 +278,16 @@ type Interactive struct {
 	CollectCnt int64
 	Ctime      int64
 	Utime      int64
+}
+
+func (i Interactive) ID() int64 {
+	return i.Id
+}
+
+func (i Interactive) Compareto(dst migrator.Entity) bool {
+	return i == dst.(Interactive)
+	//dstVal, ok := dst.(Interactive)
+	//return ok && i == dstVal
 }
 
 // InteractiveV1 对写更友好
