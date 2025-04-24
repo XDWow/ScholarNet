@@ -39,9 +39,9 @@ func (l *LoginJWTMiddlewareBuilder) Build() gin.HandlerFunc {
 		}
 
 		tokenStr := l.ExtractToken(ctx)
-		claims := &ijwt.UserClaims{}
+		claims := ijwt.UserClaims{}
 		//ParseWithClaims 带Claim的解析，会将Claim解析出来放在参数的Claim里面，所以这里用指针（赋值）
-		token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
+		token, err := jwt.ParseWithClaims(tokenStr, &claims, func(token *jwt.Token) (interface{}, error) {
 			return ijwt.AtKey, nil
 		})
 		if err != nil {

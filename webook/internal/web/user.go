@@ -310,7 +310,7 @@ func (u *UserHandler) LogoutJWT(ctx *gin.Context) {
 func (u *UserHandler) ProfileJWT(ctx *gin.Context) {
 	uc, _ := ctx.Get("claims")
 	//类型断言
-	claims, ok := uc.(*ijwt.UserClaims)
+	claims, ok := uc.(ijwt.UserClaims)
 	if !ok {
 		ctx.String(http.StatusOK, "系统错误")
 		return

@@ -2,7 +2,8 @@ package service
 
 import (
 	"context"
-	service2 "github.com/LXD-c/basic-go/webook/interactive/service"
+	"errors"
+	intrv1 "github.com/LXD-c/basic-go/webook/api/proto/gen/intr/v1"
 	"github.com/LXD-c/basic-go/webook/internal/domain"
 	"github.com/LXD-c/basic-go/webook/internal/repository"
 	"github.com/ecodeclub/ekit/queue"
@@ -18,7 +19,7 @@ type RankingService interface {
 
 type BatchRankingService struct {
 	artSvc    ArticleService
-	intrSvc   service2.InteractiveService
+	intrSvc   intrv1.InteractiveServiceClient
 	repo      repository.RankingRepository
 	batchSize int
 	n         int
@@ -26,7 +27,7 @@ type BatchRankingService struct {
 	scoreFunc func(t time.Time, likeCnt int64) float64
 }
 
-func NewBatchRankingService(artSvc ArticleService, intrSvc service2.InteractiveService, repo repository.RankingRepository) RankingService {
+func NewBatchRankingService(artSvc ArticleService, intrSvc intrv1.InteractiveServiceClient, repo repository.RankingRepository) RankingService {
 	return &BatchRankingService{
 		artSvc:    artSvc,
 		intrSvc:   intrSvc,
@@ -82,14 +83,20 @@ func (s *BatchRankingService) topN(ctx context.Context) ([]domain.Article, error
 			return src.Id
 		})
 		// 要去找到对应的点赞数据
-		intrs, err := s.intrSvc.GetByIds(ctx, "article", ids)
+		resp, err := s.intrSvc.GetByIds(ctx, &intrv1.GetByIdsRequest{
+			Biz:    "article",
+			BizIds: ids,
+		})
 		if err != nil {
 			return nil, err
+		}
+		if len(resp.Intrs) == 0 {
+			return nil, errors.New("没有数据")
 		}
 		// 计算 score
 		// 并决定是否要放入优先队列，即topN
 		for _, art := range arts {
-			intr := intrs[art.Id]
+			intr := resp.Intrs[art.Id]
 			score := s.scoreFunc(art.Utime, intr.LikeCnt)
 			// 我要考虑，我这个 score 在不在前一百名
 			// 两种情况：1、队列未满，直接入 2、队列满了，跟堆顶最小的比

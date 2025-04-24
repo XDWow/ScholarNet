@@ -85,7 +85,7 @@ func (h *RedisJwtHandler) ClearToken(ctx *gin.Context) error {
 	ctx.Header("x-refresh-token", "")
 
 	// 后端记录黑名单，以防攻击者拿着 token 访问系统
-	claims := ctx.MustGet("users").(*UserClaims)
+	claims := ctx.MustGet("users").(UserClaims)
 	return h.cmd.Set(ctx, fmt.Sprintf("users:ssid:%s", claims.Ssid),
 		"", time.Hour*24*7).Err()
 }

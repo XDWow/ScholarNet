@@ -36,6 +36,8 @@ enum Gender {
 
 service UserService {
   rpc GetById(GetByIdRequest) returns (GetByIdResponse);
+  rpc UpdateById(UpdateByIdRequest) returns (UpdateByIdResponse);
+  rpc GetByIdV1(GetByIdRequest) returns (GetByIdResponse);
 }
 
 message GetByIdRequest {
@@ -43,6 +45,15 @@ message GetByIdRequest {
 }
 
 message GetByIdResponse {
+  User user = 1;
+}
+
+
+message UpdateByIdRequest {
+  int64 id = 1;
+}
+
+message UpdateByIdResponse {
   User user = 1;
 }
 

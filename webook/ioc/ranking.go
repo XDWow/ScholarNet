@@ -18,7 +18,8 @@ func InitJobs(l logger.LoggerV1, rankingJob *job.RankingJob) *cron.Cron {
 	res := cron.New(cron.WithSeconds())
 	cbd := job.NewCronJobBuilder(l)
 	// 三分钟执行一次，装饰器封装好的 rankingJob
-	_, err := res.AddJob("@every 3min", cbd.Build(rankingJob))
+	//_, err := res.AddJob("@every 3min", cbd.Build(rankingJob))
+	_, err := res.AddJob("0 */3 * * * ?", cbd.Build(rankingJob))
 	if err != nil {
 		panic(err)
 	}

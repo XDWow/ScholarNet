@@ -23,6 +23,8 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UserServiceClient interface {
 	GetById(ctx context.Context, in *GetByIdRequest, opts ...grpc.CallOption) (*GetByIdResponse, error)
+	UpdateById(ctx context.Context, in *UpdateByIdRequest, opts ...grpc.CallOption) (*UpdateByIdResponse, error)
+	GetByIdV1(ctx context.Context, in *GetByIdRequest, opts ...grpc.CallOption) (*GetByIdResponse, error)
 }
 
 type userServiceClient struct {
@@ -42,11 +44,31 @@ func (c *userServiceClient) GetById(ctx context.Context, in *GetByIdRequest, opt
 	return out, nil
 }
 
+func (c *userServiceClient) UpdateById(ctx context.Context, in *UpdateByIdRequest, opts ...grpc.CallOption) (*UpdateByIdResponse, error) {
+	out := new(UpdateByIdResponse)
+	err := c.cc.Invoke(ctx, "/UserService/UpdateById", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) GetByIdV1(ctx context.Context, in *GetByIdRequest, opts ...grpc.CallOption) (*GetByIdResponse, error) {
+	out := new(GetByIdResponse)
+	err := c.cc.Invoke(ctx, "/UserService/GetByIdV1", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility
 type UserServiceServer interface {
 	GetById(context.Context, *GetByIdRequest) (*GetByIdResponse, error)
+	UpdateById(context.Context, *UpdateByIdRequest) (*UpdateByIdResponse, error)
+	GetByIdV1(context.Context, *GetByIdRequest) (*GetByIdResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -56,6 +78,12 @@ type UnimplementedUserServiceServer struct {
 
 func (UnimplementedUserServiceServer) GetById(context.Context, *GetByIdRequest) (*GetByIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetById not implemented")
+}
+func (UnimplementedUserServiceServer) UpdateById(context.Context, *UpdateByIdRequest) (*UpdateByIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateById not implemented")
+}
+func (UnimplementedUserServiceServer) GetByIdV1(context.Context, *GetByIdRequest) (*GetByIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetByIdV1 not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 
@@ -88,6 +116,42 @@ func _UserService_GetById_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_UpdateById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateByIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).UpdateById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/UserService/UpdateById",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).UpdateById(ctx, req.(*UpdateByIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_GetByIdV1_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetByIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetByIdV1(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/UserService/GetByIdV1",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetByIdV1(ctx, req.(*GetByIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -98,6 +162,14 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetById",
 			Handler:    _UserService_GetById_Handler,
+		},
+		{
+			MethodName: "UpdateById",
+			Handler:    _UserService_UpdateById_Handler,
+		},
+		{
+			MethodName: "GetByIdV1",
+			Handler:    _UserService_GetByIdV1_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -7,6 +7,7 @@ import (
 	repository2 "github.com/LXD-c/basic-go/webook/interactive/repository"
 	cache2 "github.com/LXD-c/basic-go/webook/interactive/repository/cache"
 	dao2 "github.com/LXD-c/basic-go/webook/interactive/repository/dao"
+	service2 "github.com/LXD-c/basic-go/webook/interactive/service"
 	"github.com/LXD-c/basic-go/webook/internal/events/article"
 	"github.com/LXD-c/basic-go/webook/internal/repository"
 	article2 "github.com/LXD-c/basic-go/webook/internal/repository/article"
@@ -22,7 +23,7 @@ import (
 )
 
 var interactiveSvcProvider = wire.NewSet(
-	service.NewInteractiveServiceImpl,
+	service2.NewInteractiveService,
 	repository2.NewCachedInteractiveRepository,
 	dao2.NewGORMInteractiveDAO,
 	cache2.NewRedisInteractiveCache,
@@ -47,6 +48,7 @@ func InitWebServer() *App {
 
 		interactiveSvcProvider,
 		rankingSvcProvider,
+		ioc.InitIntrGRPCClient,
 		ioc.InitJobs,
 		ioc.InitRankingJob,
 
@@ -78,7 +80,7 @@ func InitWebServer() *App {
 
 		web.NewUserHandler,
 		web.NewOAuth2WechatHandler,
-		ioc.NewWechatHandlerConfig,
+		//ioc.NewWechatHandlerConfig,
 		ijwt.NewRedisJWTHandler,
 		web.NewArticleHandler,
 		// 你中间件呢？

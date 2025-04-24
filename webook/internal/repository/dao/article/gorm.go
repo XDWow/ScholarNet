@@ -202,7 +202,6 @@ func (dao *GORMArticleDAO) Sync(ctx context.Context, art Article) (int64, error)
 		if err != nil {
 			return err
 		}
-		tx.Commit()
 		return nil
 	})
 	return id, err

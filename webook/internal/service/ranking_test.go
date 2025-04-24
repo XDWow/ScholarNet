@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	intrv1 "github.com/LXD-c/basic-go/webook/api/proto/gen/intr/v1"
 	domain2 "github.com/LXD-c/basic-go/webook/interactive/domain"
 	service2 "github.com/LXD-c/basic-go/webook/interactive/service"
 	"github.com/LXD-c/basic-go/webook/internal/domain"
@@ -16,7 +17,7 @@ func TestRankingTopN(t *testing.T) {
 	now := time.Now()
 	testCases := []struct {
 		name string
-		mock func(ctrl *gomock.Controller) (ArticleService, service2.InteractiveService)
+		mock func(ctrl *gomock.Controller) (ArticleService, intrv1.InteractiveServiceClient)
 
 		wantErr  error
 		wantArts []domain.Article

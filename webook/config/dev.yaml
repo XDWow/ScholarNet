@@ -10,3 +10,8 @@ abc: "helloabc" # v1
 kafka:
   addrs:
     - "localhost:9094"
+
+grpc:
+  client:
+    intr:
+      Addr: "localhost:8090"
