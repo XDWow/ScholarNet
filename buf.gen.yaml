@@ -2,7 +2,7 @@ version: v1
 managed:
   enabled: true
   go_package_prefix:
-    default: "github.com/LXD-c/basic-go/webook/api/proto/gen"
+    default: "github.com/XD/ScholarNet/webook/api/proto/gen"
 plugins:
   - plugin: buf.build/protocolbuffers/go
     out:  webook/api/proto/gen

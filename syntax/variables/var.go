@@ -1,6 +1,6 @@
 package main
 
-import "github.com/LXD-c/basic-go/syntax/variables/demo"
+import "github.com/XD/ScholarNet/syntax/variables/demo"
 
 var (
 	a1 int     = 123

@@ -2,8 +2,8 @@ package grpc
 
 import (
 	"context"
-	_ "github.com/LXD-c/basic-go/webook/pkg/grpcx/balancer/wrr"
-	"github.com/LXD-c/basic-go/webook/pkg/netx"
+	_ "github.com/XD/ScholarNet/cmd/pkg/grpcx/balancer/wrr"
+	"github.com/XD/ScholarNet/cmd/pkg/netx"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	etcdv3 "go.etcd.io/etcd/client/v3"

@@ -1,0 +1,27 @@
+syntax="proto3";
+
+package   sms.v1;
+option go_package="sms/v1;smsv1";
+
+
+service SmsService {
+  // 发送消息
+  rpc Send(SmsSendRequest)returns(SmsSendResponse);
+}
+
+message SmsSendRequest {
+  string tplId = 1;
+  repeated string args = 2;
+  repeated string numbers = 3;
+  RetryStrategy strategy = 4;
+}
+
+enum RetryStrategy {
+  STRATEGY_UNSPECIFIED = 0;  // 默认（或退到同步）
+  ERROR_FAILOVER       = 1;  // 错误触发切换
+  TIMEOUT_FAILOVER     = 2;  // 超时触发切换
+}
+
+message SmsSendResponse{
+  int64 Id = 1;
+}

@@ -1,0 +1,16 @@
+{
+  "mapping": {
+    "id": {
+      "type": "long"
+    },
+    "title": {
+      "type": "text"
+    },
+    "content": {
+      "type": "text"
+    },
+    "status": {
+      "type": "integer"
+    }
+  }
+}

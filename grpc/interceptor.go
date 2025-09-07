@@ -3,8 +3,8 @@ package grpc
 import (
 	"context"
 	"fmt"
-	"github.com/LXD-c/basic-go/webook/pkg/logger"
-	"github.com/LXD-c/basic-go/webook/pkg/ratelimit"
+	"github.com/XD/ScholarNet/cmd/pkg/logger"
+	"github.com/XD/ScholarNet/cmd/pkg/ratelimit"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

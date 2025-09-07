@@ -1,0 +1,15 @@
+db:
+  dsn: "root:root@tcp(localhost:13316)/webook_user"
+
+redis:
+  addr: "localhost:6379"
+
+etcd:
+  endpoints:
+    - "localhost:12379"
+
+grpc:
+  server:
+#    要注意，拆分出来之后有很多服务，都会占用端口，小心端口冲突。
+    port: 8091
+    etcdTTL: 60

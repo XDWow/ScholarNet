@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webook-mysql
+  labels:
+    app: webook-mysql
+spec:
+  selector:
+    matchLabels:
+      app: webook-mysql
+#   定义 POD 的模板
+  template:
+    metadata:
+      name: webook-mysql
+      labels:
+        app: webook-mysql
+    spec:
+      containers:
+        - name: webook-mysql
+          image: mysql:8.0
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: root
+          imagePullPolicy: IfNotPresent
+          # 卷挂载
+          volumeMounts:
+#            我要在MySql里面挂载一个目录/mysql，当容器读写这个目录的时候，实际上读写的是mysql-storage
+            - mountPath: /var/lib/mysql
+#              指定 POD 中某个volumes,我要用哪个
+              name: mysql-storage
+          ports:
+            - containerPort: 3306
+              protocol: TCP
+      restartPolicy: Always
+#     整个 POD 有哪些持久化卷
+      volumes:
+        - name: mysql-storage
+          # 需要什么存储资源，是通过 PersistentVolumeClaim 来声明的。
+          persistentVolumeClaim:
+            claimName: webook-mysql-claim
+#        - name: hadoop-storage
+#          persistentVolumeClaim:
+#            claimName: webook-hadoop-claim
+      

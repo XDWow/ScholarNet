@@ -1,0 +1,12 @@
+grpc:
+  #  启动监听 8096 端口
+  server:
+    port: ":8096"
+    etcdTTL: 60
+    etcdAddr: "localhost:12379"
+  client:
+    sms:
+      target: "etcd:///service/sms"
+
+redis:
+  addr: "localhost:6379"

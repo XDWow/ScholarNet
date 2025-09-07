@@ -3,7 +3,7 @@ package grpc
 import (
 	"context"
 	_ "embed"
-	"github.com/LXD-c/basic-go/webook/pkg/netx"
+	"github.com/XD/ScholarNet/cmd/pkg/netx"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	etcdv3 "go.etcd.io/etcd/client/v3"

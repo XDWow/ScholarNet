@@ -1,5 +1,5 @@
 syntax = "proto3";
-option go_package = "github.com/LXD-c/basic-go/grpc";
+option go_package = "github.com/XD/ScholarNet/grpc";
 
 // 这个会报错
 //option go_package = "grpc";
